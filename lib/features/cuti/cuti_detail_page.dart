@@ -14,10 +14,6 @@ class CutiDetailPage extends StatefulWidget {
 
 class _CutiDetailPageState extends State<CutiDetailPage>
     with SingleTickerProviderStateMixin {
-  static const _teal = AppColors.teal;
-  static const _tealDark = AppColors.tealDeep;
-  static const _tealLight = AppColors.tealSoft;
-  static const _bg = AppColors.bg;
   static const _textDark = AppColors.textPrimary;
 
   Map<String, dynamic>? _data;
@@ -101,7 +97,7 @@ class _CutiDetailPageState extends State<CutiDetailPage>
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: const Text('Cuti berhasil dibatalkan.',
               style: TextStyle(fontWeight: FontWeight.w600)),
-          backgroundColor: _teal,
+          backgroundColor: AppColors.black,
           behavior: SnackBarBehavior.floating,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -208,12 +204,12 @@ class _CutiDetailPageState extends State<CutiDetailPage>
         body: _loading
             ? const Center(
                 child: CircularProgressIndicator(
-                  color: _teal,
+                  color: AppColors.black,
                   strokeWidth: 2.5,
                 ),
               )
             : RefreshIndicator(
-                color: _teal,
+                color: AppColors.black,
                 onRefresh: _loadData,
                 child: FadeTransition(
                   opacity: _fadeAnimation,
@@ -252,17 +248,18 @@ class _CutiDetailPageState extends State<CutiDetailPage>
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [_teal, Color(0xFF1C8CA0)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: AppColors.black,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: _teal.withOpacity(0.3),
-            blurRadius: 20,
+            color: AppColors.softLime.withValues(alpha: 0.18),
+            blurRadius: 24,
             offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -275,7 +272,7 @@ class _CutiDetailPageState extends State<CutiDetailPage>
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(13),
                 ),
                 child: const Icon(Icons.luggage_rounded,
@@ -287,7 +284,7 @@ class _CutiDetailPageState extends State<CutiDetailPage>
                     horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: statusBg,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -321,13 +318,13 @@ class _CutiDetailPageState extends State<CutiDetailPage>
           Row(
             children: [
               Icon(Icons.person_outline_rounded,
-                  size: 12, color: Colors.white.withOpacity(0.7)),
+                  size: 12, color: Colors.white.withValues(alpha: 0.7)),
               const SizedBox(width: 5),
               Text(
                 'Pejabat: ${_data?['pejabat']?.toString() ?? '-'}',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -371,7 +368,7 @@ class _CutiDetailPageState extends State<CutiDetailPage>
           if (_data?['keterangan'] != null &&
               _data!['keterangan'].toString().isNotEmpty) ...[
             const SizedBox(height: 14),
-            Divider(height: 1, color: Colors.grey[100]),
+            const Divider(height: 1, color: AppColors.border),
             const SizedBox(height: 14),
             Text(
               'Keterangan',
@@ -382,13 +379,13 @@ class _CutiDetailPageState extends State<CutiDetailPage>
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: _bg,
+                color: AppColors.surfaceMuted,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 _data!['keterangan'].toString(),
                 style: const TextStyle(
-                    fontSize: 13, height: 1.5, color: _textDark),
+                    fontSize: 13, height: 1.5, color: AppColors.textPrimary),
               ),
             ),
           ],
@@ -417,8 +414,8 @@ class _CutiDetailPageState extends State<CutiDetailPage>
                   Container(
                     width: 32,
                     height: 32,
-                    decoration: BoxDecoration(
-                      color: _tealLight,
+                    decoration: const BoxDecoration(
+                      color: AppColors.surfaceMuted,
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -426,7 +423,7 @@ class _CutiDetailPageState extends State<CutiDetailPage>
                         width: 10,
                         height: 10,
                         decoration: const BoxDecoration(
-                          color: _teal,
+                          color: AppColors.black,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -434,7 +431,7 @@ class _CutiDetailPageState extends State<CutiDetailPage>
                   ),
                   if (!isLast)
                     Container(
-                        width: 2, height: 24, color: Colors.grey[100]),
+                        width: 2, height: 24, color: AppColors.border),
                 ],
               ),
               const SizedBox(width: 12),
@@ -525,13 +522,7 @@ class _CutiDetailPageState extends State<CutiDetailPage>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: AppShadows.sm,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -542,10 +533,10 @@ class _CutiDetailPageState extends State<CutiDetailPage>
                   width: 34,
                   height: 34,
                   decoration: BoxDecoration(
-                    color: _tealLight,
+                    color: AppColors.surfaceMuted,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(icon, color: _teal, size: 17),
+                  child: Icon(icon, color: AppColors.textPrimary, size: 17),
                 ),
                 const SizedBox(width: 10),
                 Text(
@@ -553,13 +544,13 @@ class _CutiDetailPageState extends State<CutiDetailPage>
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
-                    color: _textDark,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 14),
-            Divider(height: 1, color: Colors.grey[100]),
+            const Divider(height: 1, color: AppColors.border),
             const SizedBox(height: 14),
             child,
           ],

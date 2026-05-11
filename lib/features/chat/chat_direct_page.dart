@@ -18,10 +18,6 @@ class ChatDirectPage extends StatefulWidget {
 }
 
 class _ChatDirectPageState extends State<ChatDirectPage> {
-  static const _teal = AppColors.teal;
-  static const _tealDark = AppColors.tealDeep;
-  static const _tealLight = AppColors.tealSoft;
-  static const _bg = AppColors.bg;
   static const _textDark = AppColors.textPrimary;
 
   List _messages = [];
@@ -129,7 +125,7 @@ class _ChatDirectPageState extends State<ChatDirectPage> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: _tealLight,
+                color: AppColors.surfaceMuted,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Center(
@@ -140,7 +136,7 @@ class _ChatDirectPageState extends State<ChatDirectPage> {
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: _teal,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),
@@ -194,13 +190,13 @@ class _ChatDirectPageState extends State<ChatDirectPage> {
       ),
       body: _loading
           ? const Center(
-              child: CircularProgressIndicator(color: _teal, strokeWidth: 2.5),
+              child: CircularProgressIndicator(color: AppColors.black, strokeWidth: 2.5),
             )
           : Column(
               children: [
                 Expanded(
                   child: RefreshIndicator(
-                    color: _teal,
+                    color: AppColors.black,
                     onRefresh: _loadMessages,
                     child: _messages.isEmpty
                         ? ListView(
@@ -216,13 +212,13 @@ class _ChatDirectPageState extends State<ChatDirectPage> {
                                         width: 80,
                                         height: 80,
                                         decoration: const BoxDecoration(
-                                          color: _tealLight,
+                                          color: AppColors.surfaceMuted,
                                           shape: BoxShape.circle,
                                         ),
                                         child: const Icon(
                                           Icons.chat_bubble_outline_rounded,
                                           size: 36,
-                                          color: _teal,
+                                          color: AppColors.textMuted,
                                         ),
                                       ),
                                       const SizedBox(height: 16),
@@ -281,7 +277,7 @@ class _ChatDirectPageState extends State<ChatDirectPage> {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: _tealLight,
+                color: AppColors.surfaceMuted,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Center(
@@ -292,7 +288,7 @@ class _ChatDirectPageState extends State<ChatDirectPage> {
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: _teal,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),
@@ -308,7 +304,7 @@ class _ChatDirectPageState extends State<ChatDirectPage> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: isMine ? _teal : Colors.white,
+                    color: isMine ? AppColors.black : Colors.white,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(14),
                       topRight: const Radius.circular(14),
@@ -317,7 +313,7 @@ class _ChatDirectPageState extends State<ChatDirectPage> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
+                        color: Colors.black.withValues(alpha: 0.04),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -354,7 +350,7 @@ class _ChatDirectPageState extends State<ChatDirectPage> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 8,
               offset: const Offset(0, -2),
             ),
@@ -373,23 +369,23 @@ class _ChatDirectPageState extends State<ChatDirectPage> {
                   decoration: InputDecoration(
                     hintText: 'Tulis pesan...',
                     hintStyle:
-                        TextStyle(color: Colors.grey[400], fontSize: 13),
+                        const TextStyle(color: AppColors.textMuted, fontSize: 13),
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 14, vertical: 10),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(24),
-                      borderSide: BorderSide(color: Colors.grey[200]!),
+                      borderSide: const BorderSide(color: AppColors.border),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(24),
-                      borderSide: BorderSide(color: Colors.grey[200]!),
+                      borderSide: const BorderSide(color: AppColors.border),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(24),
-                      borderSide: const BorderSide(color: _teal),
+                      borderSide: const BorderSide(color: AppColors.black),
                     ),
                     filled: true,
-                    fillColor: _bg,
+                    fillColor: AppColors.surfaceMuted,
                   ),
                   onSubmitted: (_) => _send(),
                 ),
@@ -400,20 +396,9 @@ class _ChatDirectPageState extends State<ChatDirectPage> {
                 child: Container(
                   width: 44,
                   height: 44,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [_teal, _tealDark],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                  decoration: const BoxDecoration(
+                    color: AppColors.black,
                     shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: _teal.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
                   ),
                   child: _sending
                       ? const Padding(

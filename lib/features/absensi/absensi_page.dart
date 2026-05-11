@@ -12,7 +12,8 @@ class AbsensiPage extends StatefulWidget {
 }
 
 class _AbsensiPageState extends State<AbsensiPage> {
-  static const _teal = AppColors.teal;
+  // _teal is kept for semantic status colors (Hadir = teal/black)
+  static const _teal = AppColors.black;
   static const _breakpoint = 600.0;
 
   bool _loading = true;
@@ -155,10 +156,10 @@ class _AbsensiPageState extends State<AbsensiPage> {
                       );
                     },
               style: ElevatedButton.styleFrom(
-                backgroundColor: _teal,
+                backgroundColor: AppColors.black,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+                    borderRadius: BorderRadius.circular(AppRadius.pill)),
               ),
               child: const Text('Simpan'),
             ),
@@ -240,7 +241,7 @@ class _AbsensiPageState extends State<AbsensiPage> {
   void _showSnack(String msg, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg),
-      backgroundColor: isError ? Colors.red : _teal,
+      backgroundColor: isError ? Colors.red : AppColors.black,
     ));
   }
 
@@ -340,10 +341,10 @@ class _AbsensiPageState extends State<AbsensiPage> {
         ),
       ),
       body: RefreshIndicator(
-        color: _teal,
+        color: AppColors.black,
         onRefresh: _loadData,
         child: _loading
-            ? const Center(child: CircularProgressIndicator(color: _teal))
+            ? const Center(child: CircularProgressIndicator(color: AppColors.black))
             : _buildBody(context),
       ),
     );
@@ -383,18 +384,18 @@ class _AbsensiPageState extends State<AbsensiPage> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.red[50],
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.red[200]!),
+        color: AppColors.dangerSoft,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.danger),
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 20),
+          const Icon(Icons.warning_amber_rounded, color: AppColors.danger, size: 20),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               _error!,
-              style: const TextStyle(color: Colors.red, fontSize: 13),
+              style: const TextStyle(color: AppColors.danger, fontSize: 13),
             ),
           ),
         ],
@@ -411,19 +412,13 @@ class _AbsensiPageState extends State<AbsensiPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppShadows.sm,
       ),
       child: Row(
         children: [
           IconButton(
             onPressed: _prevBulan,
-            icon: const Icon(Icons.chevron_left, color: _teal),
+            icon: const Icon(Icons.chevron_left, color: AppColors.textPrimary),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),
@@ -433,8 +428,8 @@ class _AbsensiPageState extends State<AbsensiPage> {
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF1A2E35),
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
               ),
             ),
           ),
@@ -442,7 +437,7 @@ class _AbsensiPageState extends State<AbsensiPage> {
             onPressed: _isCurrentMonth ? null : _nextBulan,
             icon: Icon(
               Icons.chevron_right,
-              color: _isCurrentMonth ? Colors.grey[300] : _teal,
+              color: _isCurrentMonth ? Colors.grey[300] : AppColors.textPrimary,
             ),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
@@ -469,14 +464,8 @@ class _AbsensiPageState extends State<AbsensiPage> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppShadows.sm,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -486,7 +475,7 @@ class _AbsensiPageState extends State<AbsensiPage> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF1A2E35),
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 12),
@@ -506,11 +495,9 @@ class _AbsensiPageState extends State<AbsensiPage> {
               return Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: item.color.withOpacity(0.08),
+                  color: AppColors.surfaceMuted,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: item.color.withOpacity(0.2),
-                  ),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -530,9 +517,9 @@ class _AbsensiPageState extends State<AbsensiPage> {
                       child: Text(
                         item.label,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 10,
-                          color: item.color,
+                          color: AppColors.textMuted,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -559,14 +546,8 @@ class _AbsensiPageState extends State<AbsensiPage> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppShadows.sm,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -576,7 +557,7 @@ class _AbsensiPageState extends State<AbsensiPage> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF1A2E35),
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 12),
@@ -667,12 +648,12 @@ class _AbsensiPageState extends State<AbsensiPage> {
       textColor = Colors.grey[400]!;
     } else if (absensiEntry != null) {
       final status = absensiEntry['status_kehadiran'] ?? '';
-      bgColor = _statusColor(status).withOpacity(0.15);
+      bgColor = _statusColor(status).withValues(alpha: 0.15);
       textColor = _statusColor(status);
-      borderColor = _statusColor(status).withOpacity(0.4);
+      borderColor = _statusColor(status).withValues(alpha: 0.4);
       badge = _statusBadge(status);
     } else if (!isFuture && isHariKerja) {
-      bgColor = Colors.red.withOpacity(0.06);
+      bgColor = Colors.red.withValues(alpha: 0.06);
       textColor = Colors.red[300]!;
     }
 
@@ -764,7 +745,7 @@ class _AbsensiPageState extends State<AbsensiPage> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: _statusColor(status).withOpacity(0.12),
+                    color: _statusColor(status).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -801,10 +782,10 @@ class _AbsensiPageState extends State<AbsensiPage> {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx),
             style: ElevatedButton.styleFrom(
-              backgroundColor: _teal,
+              backgroundColor: AppColors.black,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
+                  borderRadius: BorderRadius.circular(AppRadius.pill)),
             ),
             child: const Text('Tutup'),
           ),

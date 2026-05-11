@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/premium_widgets.dart';
+import '../../core/services/biometric_service.dart';
 import 'auth_service.dart';
 
 /// Premium monochrome login — editorial typography, floating card,
@@ -30,6 +31,55 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   bool _showOtp = false;
   bool _showPhone = false;
   String? _error;
+
+  // Biometric state
+  bool _biometricAvailable = false;
+  bool _biometricEnabled = false;
+  bool _biometricLoading = false;
+  String? _savedNip;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBiometric();
+  }
+
+  Future<void> _checkBiometric() async {
+    final available = await BiometricService.isAvailable();
+    final enabled = await BiometricService.isBiometricEnabled();
+    final nip = await BiometricService.getSavedNip();
+    if (mounted) {
+      setState(() {
+        _biometricAvailable = available;
+        _biometricEnabled = enabled;
+        _savedNip = nip;
+      });
+    }
+  }
+
+  Future<void> _loginWithBiometric() async {
+    if (_savedNip == null) return;
+    setState(() {
+      _biometricLoading = true;
+      _error = null;
+    });
+    try {
+      final authenticated = await BiometricService.authenticate(
+        reason: 'Gunakan Face ID atau sidik jari untuk masuk ke SIPANTAW',
+      );
+      if (!authenticated) {
+        setState(() => _error = 'Autentikasi biometrik gagal. Coba lagi.');
+        return;
+      }
+      // Login dengan NIP yang tersimpan
+      _nipController.text = _savedNip!;
+      await _checkNip();
+    } catch (e) {
+      setState(() => _error = 'Gagal autentikasi: ${e.toString()}');
+    } finally {
+      if (mounted) setState(() => _biometricLoading = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -111,7 +161,11 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       _error = null;
     });
     try {
-      await AuthService.verifyOtp(_tempKey!, otp);
+      await AuthService.verifyOtp(
+        _tempKey!,
+        otp,
+        nip: _nipController.text.trim(), // Simpan NIP untuk biometric
+      );
       if (mounted) Navigator.pushReplacementNamed(context, '/dashboard');
     } catch (e) {
       setState(() => _error = e.toString());
@@ -355,6 +409,13 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                   onTap: _loading ? null : _checkNip,
                   trailingIcon: Icons.arrow_forward_rounded,
                 ),
+                // Face ID / Biometric button
+                if (_biometricAvailable && _biometricEnabled && _savedNip != null) ...[
+                  const SizedBox(height: 16),
+                  _buildBiometricDivider(),
+                  const SizedBox(height: 16),
+                  _buildBiometricButton(),
+                ],
               ],
               if (_showPhone) ...[
                 PremiumInput(
@@ -493,6 +554,66 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       ),
     );
   }
+
+  Widget _buildBiometricDivider() {
+    return Row(
+      children: [
+        Expanded(child: Divider(color: AppColors.border, height: 1)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            'atau masuk dengan',
+            style: TextStyle(
+              fontSize: 11,
+              color: AppColors.textMuted,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        Expanded(child: Divider(color: AppColors.border, height: 1)),
+      ],
+    );
+  }
+
+  Widget _buildBiometricButton() {
+    return PressableScale(
+      onTap: _biometricLoading ? () {} : _loginWithBiometric,
+      child: Container(
+        height: 56,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceMuted,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: _biometricLoading
+            ? const Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: AppColors.black,
+                    strokeWidth: 2,
+                  ),
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _BiometricIcon(),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'Masuk dengan Face ID',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
 }
 
 // ─── Single OTP box with focus glow ───────────────────────────
@@ -593,6 +714,62 @@ class _Orb extends StatelessWidget {
         shape: BoxShape.circle,
         gradient: RadialGradient(
           colors: [color, color.withOpacity(0)],
+        ),
+      ),
+    );
+  }
+}
+
+/// Animated biometric icon — Face ID style
+class _BiometricIcon extends StatefulWidget {
+  const _BiometricIcon();
+
+  @override
+  State<_BiometricIcon> createState() => _BiometricIconState();
+}
+
+class _BiometricIconState extends State<_BiometricIcon>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat(reverse: true);
+    _scale = Tween<double>(begin: 0.92, end: 1.08).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _scale,
+      builder: (_, child) => Transform.scale(
+        scale: _scale.value,
+        child: child,
+      ),
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: AppColors.black,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: const Icon(
+          Icons.face_rounded,
+          color: AppColors.softLime,
+          size: 20,
         ),
       ),
     );

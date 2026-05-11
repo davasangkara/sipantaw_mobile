@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_config.dart';
 import '../../core/storage/token_storage.dart';
+import '../../core/services/biometric_service.dart';
 
 class AuthService {
   // Step 1 - Cek NIP
@@ -31,7 +32,11 @@ class AuthService {
   }
 
   // Step 3 - Verifikasi OTP
-  static Future<Map<String, dynamic>> verifyOtp(String tempKey, String otp) async {
+  static Future<Map<String, dynamic>> verifyOtp(
+    String tempKey,
+    String otp, {
+    String? nip, // NIP untuk disimpan ke biometric
+  }) async {
     try {
       final res = await ApiClient.post(
         ApiConfig.verifyOtp,
@@ -43,18 +48,33 @@ class AuthService {
       await TokenStorage.saveToken(data['token']);
       await TokenStorage.savePegawai(data['pegawai']);
 
+      // Simpan NIP untuk biometric login jika disediakan
+      if (nip != null && nip.isNotEmpty) {
+        await BiometricService.saveNipForBiometric(nip);
+      }
+
       return data;
     } on DioException catch (e) {
       throw _handleError(e);
     }
   }
 
-  // Logout
+  // Logout — tidak hapus biometric data agar bisa re-login dengan Face ID
   static Future<void> logout() async {
     try {
       await ApiClient.post(ApiConfig.logout);
     } catch (_) {}
     await TokenStorage.clearAll();
+    // Biometric data TIDAK dihapus — user bisa login lagi dengan Face ID
+  }
+
+  // Logout penuh — hapus semua termasuk biometric
+  static Future<void> logoutFull() async {
+    try {
+      await ApiClient.post(ApiConfig.logout);
+    } catch (_) {}
+    await TokenStorage.clearAll();
+    await BiometricService.clearBiometric();
   }
 
   // Error handler

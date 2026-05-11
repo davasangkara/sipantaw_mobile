@@ -11,6 +11,7 @@ import '../../core/api/api_config.dart';
 import '../../core/storage/token_storage.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/premium_widgets.dart';
+import '../../core/services/biometric_service.dart';
 import '../auth/auth_service.dart';
 import '../laporan/laporan_form_page.dart';
 import '../riwayat/riwayat_page.dart';
@@ -90,36 +91,14 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   Future<void> _logout() async {
+    final biometricEnabled = await BiometricService.isBiometricEnabled();
+
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg)),
-        title: const Text('Keluar dari akun?'),
-        content: const Text(
-            'Anda akan keluar dan perlu masuk kembali dengan NIP.'),
-        actionsPadding:
-            const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        actions: [
-          PremiumButton(
-            label: 'Batal',
-            onTap: () => Navigator.pop(ctx, false),
-            outlined: true,
-            fullWidth: false,
-            height: 44,
-          ),
-          const SizedBox(width: 10),
-          PremiumButton(
-            label: 'Logout',
-            onTap: () => Navigator.pop(ctx, true),
-            fullWidth: false,
-            height: 44,
-          ),
-        ],
-      ),
+      builder: (ctx) => _LogoutDialog(biometricEnabled: biometricEnabled),
     );
     if (ok == true && mounted) {
-      await AuthService.logout();
+      await AuthService.logout(); // Biometric data tetap tersimpan
       if (mounted) Navigator.pushReplacementNamed(context, '/');
     }
   }
@@ -2921,6 +2900,132 @@ class _ChartSummaryPill extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// LOGOUT DIALOG — iOS style dengan info Face ID
+// ══════════════════════════════════════════════════════════════
+class _LogoutDialog extends StatelessWidget {
+  final bool biometricEnabled;
+  const _LogoutDialog({required this.biometricEnabled});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: AppShadows.lg,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Icon
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.dangerSoft,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Icon(
+                Icons.logout_rounded,
+                color: AppColors.danger,
+                size: 30,
+              ),
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'Keluar dari akun?',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+                letterSpacing: -0.3,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              biometricEnabled
+                  ? 'Anda bisa masuk kembali dengan Face ID tanpa memasukkan NIP.'
+                  : 'Anda perlu memasukkan NIP untuk masuk kembali.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textMuted,
+                height: 1.5,
+              ),
+            ),
+            // Face ID info badge
+            if (biometricEnabled) ...[
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceMuted,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: AppColors.black,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.face_rounded,
+                        color: AppColors.softLime,
+                        size: 16,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Face ID aktif untuk login berikutnya',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 22),
+            Row(
+              children: [
+                Expanded(
+                  child: PremiumButton(
+                    label: 'Batal',
+                    onTap: () => Navigator.pop(context, false),
+                    outlined: true,
+                    height: 48,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: PremiumButton(
+                    label: 'Logout',
+                    onTap: () => Navigator.pop(context, true),
+                    background: AppColors.danger,
+                    height: 48,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

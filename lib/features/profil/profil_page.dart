@@ -6,6 +6,7 @@ import '../../core/api/api_client.dart';
 import '../../core/api/api_config.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/premium_widgets.dart';
+import '../../core/services/biometric_service.dart';
 import '../auth/auth_service.dart';
 
 class ProfilPage extends StatefulWidget {
@@ -18,10 +19,7 @@ class ProfilPage extends StatefulWidget {
 class _ProfilPageState extends State<ProfilPage>
     with SingleTickerProviderStateMixin {
   static const _teal = AppColors.teal;
-  static const _tealDark = AppColors.tealDeep;
   static const _tealLight = AppColors.tealSoft;
-  static const _bg = AppColors.bg;
-  static const _textDark = AppColors.textPrimary;
 
   Map<String, dynamic>? _data;
   bool _loading = true;
@@ -122,7 +120,7 @@ class _ProfilPageState extends State<ProfilPage>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Foto profil berhasil diperbarui!'),
-            backgroundColor: _teal,
+            backgroundColor: AppColors.black,
           ),
         );
         _loadData();
@@ -174,7 +172,7 @@ class _ProfilPageState extends State<ProfilPage>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Foto profil berhasil dihapus.'),
-            backgroundColor: _teal,
+            backgroundColor: AppColors.black,
           ),
         );
         _loadData();
@@ -194,27 +192,10 @@ class _ProfilPageState extends State<ProfilPage>
   }
 
   Future<void> _logout() async {
+    final biometricEnabled = await BiometricService.isBiometricEnabled();
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Konfirmasi Logout'),
-        content: const Text('Yakin ingin keluar dari aplikasi?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
+      builder: (ctx) => _ProfilLogoutDialog(biometricEnabled: biometricEnabled),
     );
     if (ok == true && mounted) {
       await AuthService.logout();
@@ -312,12 +293,12 @@ class _ProfilPageState extends State<ProfilPage>
         body: _loading
             ? const Center(
                 child: CircularProgressIndicator(
-                  color: _teal,
+                  color: AppColors.black,
                   strokeWidth: 2.5,
                 ),
               )
             : RefreshIndicator(
-                color: _teal,
+                color: AppColors.black,
                 onRefresh: _loadData,
                 child: _error != null
                     ? ListView(
@@ -505,10 +486,10 @@ class _ProfilPageState extends State<ProfilPage>
                         decoration: BoxDecoration(
                           color: Colors.white,
                           shape: BoxShape.circle,
-                          border: Border.all(color: _teal, width: 2),
+                          border: Border.all(color: AppColors.black, width: 2),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.15),
+                              color: Colors.black.withValues(alpha: 0.15),
                               blurRadius: 6,
                             ),
                           ],
@@ -518,11 +499,11 @@ class _ProfilPageState extends State<ProfilPage>
                                 padding: EdgeInsets.all(5),
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: _teal,
+                                  color: AppColors.black,
                                 ),
                               )
                             : const Icon(Icons.camera_alt_rounded,
-                                size: 14, color: _teal),
+                                size: 14, color: AppColors.black),
                       ),
                     ),
                   ),
@@ -616,14 +597,14 @@ class _ProfilPageState extends State<ProfilPage>
   }
 
   Widget _avatarFallback(String nama) => Container(
-        color: _tealLight,
+        color: AppColors.surfaceMuted,
         child: Center(
           child: Text(
             nama.isNotEmpty ? nama[0].toUpperCase() : 'P',
             style: const TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.w700,
-              color: _teal,
+              color: AppColors.textPrimary,
             ),
           ),
         ),
@@ -636,13 +617,7 @@ class _ProfilPageState extends State<ProfilPage>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppShadows.sm,
       ),
       child: Row(
         children: [
@@ -715,13 +690,7 @@ class _ProfilPageState extends State<ProfilPage>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: AppShadows.sm,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -732,10 +701,10 @@ class _ProfilPageState extends State<ProfilPage>
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: _tealLight,
+                    color: AppColors.surfaceMuted,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(icon, color: _teal, size: 16),
+                  child: Icon(icon, color: AppColors.textPrimary, size: 16),
                 ),
                 const SizedBox(width: 10),
                 Text(
@@ -743,13 +712,13 @@ class _ProfilPageState extends State<ProfilPage>
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: _textDark,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            Divider(height: 1, color: Colors.grey[100]),
+            const Divider(height: 1, color: AppColors.border),
             const SizedBox(height: 12),
             ...items.asMap().entries.map((e) => Padding(
                   padding: EdgeInsets.only(
@@ -761,19 +730,19 @@ class _ProfilPageState extends State<ProfilPage>
                         width: 110,
                         child: Text(
                           e.value.label,
-                          style: TextStyle(
-                              fontSize: 12, color: Colors.grey[500]),
+                          style: const TextStyle(
+                              fontSize: 12, color: AppColors.textMuted),
                         ),
                       ),
                       const Text(': ',
-                          style: TextStyle(color: Colors.grey)),
+                          style: TextStyle(color: AppColors.textMuted)),
                       Expanded(
                         child: Text(
                           e.value.value,
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: _textDark,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       ),
@@ -799,21 +768,135 @@ class _ErrorBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.red[50],
+        color: AppColors.dangerSoft,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.red[200]!),
+        border: Border.all(color: AppColors.danger),
       ),
       child: Row(
         children: [
-          Icon(Icons.warning_amber_rounded, color: Colors.red[400], size: 20),
+          const Icon(Icons.warning_amber_rounded, color: AppColors.danger, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
-              style: TextStyle(color: Colors.red[600], fontSize: 13),
+              style: const TextStyle(color: AppColors.danger, fontSize: 13),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ProfilLogoutDialog extends StatelessWidget {
+  final bool biometricEnabled;
+  const _ProfilLogoutDialog({required this.biometricEnabled});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: AppShadows.lg,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.dangerSoft,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Icon(Icons.logout_rounded,
+                  color: AppColors.danger, size: 30),
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'Keluar dari akun?',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+                letterSpacing: -0.3,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              biometricEnabled
+                  ? 'Anda bisa masuk kembali dengan Face ID tanpa memasukkan NIP.'
+                  : 'Anda perlu memasukkan NIP untuk masuk kembali.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textMuted,
+                height: 1.5,
+              ),
+            ),
+            if (biometricEnabled) ...[
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceMuted,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: AppColors.black,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.face_rounded,
+                          color: AppColors.softLime, size: 16),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Face ID aktif untuk login berikutnya',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 22),
+            Row(
+              children: [
+                Expanded(
+                  child: PremiumButton(
+                    label: 'Batal',
+                    onTap: () => Navigator.pop(context, false),
+                    outlined: true,
+                    height: 48,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: PremiumButton(
+                    label: 'Logout',
+                    onTap: () => Navigator.pop(context, true),
+                    background: AppColors.danger,
+                    height: 48,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

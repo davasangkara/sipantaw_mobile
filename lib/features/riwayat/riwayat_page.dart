@@ -14,10 +14,6 @@ class RiwayatPage extends StatefulWidget {
 
 class _RiwayatPageState extends State<RiwayatPage>
     with SingleTickerProviderStateMixin {
-  static const _teal = AppColors.teal;
-  static const _tealDark = AppColors.tealDeep;
-  static const _tealLight = AppColors.tealSoft;
-  static const _bg = AppColors.bg;
   static const _textDark = AppColors.textPrimary;
 
   List _laporan = [];
@@ -238,12 +234,12 @@ class _RiwayatPageState extends State<RiwayatPage>
                 child: ElevatedButton(
                   onPressed: _applyFilter,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _teal,
+                    backgroundColor: AppColors.black,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                   ),
                   child: const Text(
@@ -283,18 +279,18 @@ class _RiwayatPageState extends State<RiwayatPage>
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           filled: true,
-          fillColor: _bg,
+          fillColor: AppColors.surfaceMuted,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide.none,
           ),
         ),
         hint: Text(hint,
-            style: TextStyle(color: Colors.grey[400], fontSize: 13)),
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 13)),
         items: items,
         onChanged: onChanged,
         dropdownColor: Colors.white,
@@ -405,12 +401,12 @@ class _RiwayatPageState extends State<RiwayatPage>
         body: _loading
             ? const Center(
                 child: CircularProgressIndicator(
-                  color: _teal,
+                  color: AppColors.black,
                   strokeWidth: 2.5,
                 ),
               )
             : RefreshIndicator(
-                color: _teal,
+                color: AppColors.black,
                 onRefresh: () => _loadData(),
                 child: FadeTransition(
                   opacity: _fadeAnimation,
@@ -447,7 +443,7 @@ class _RiwayatPageState extends State<RiwayatPage>
                                         padding: EdgeInsets.all(20),
                                         child: Center(
                                           child: CircularProgressIndicator(
-                                            color: _teal,
+                                            color: AppColors.black,
                                             strokeWidth: 2.5,
                                           ),
                                         ),
@@ -475,20 +471,20 @@ class _RiwayatPageState extends State<RiwayatPage>
           padding:
               const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
-            color: _tealLight,
-            borderRadius: BorderRadius.circular(20),
+            color: AppColors.surfaceMuted,
+            borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.layers_rounded, size: 13, color: _teal),
+              const Icon(Icons.layers_rounded, size: 13, color: AppColors.textPrimary),
               const SizedBox(width: 5),
               Text(
                 '$_total laporan',
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: _teal,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ],
@@ -502,21 +498,21 @@ class _RiwayatPageState extends State<RiwayatPage>
               padding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
+                color: AppColors.dangerSoft,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
-              child: Row(
+              child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.close_rounded,
-                      size: 13, color: Colors.orange),
-                  const SizedBox(width: 5),
-                  const Text(
+                  Icon(Icons.close_rounded,
+                      size: 13, color: AppColors.danger),
+                  SizedBox(width: 5),
+                  Text(
                     'Hapus Filter',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: Colors.orange,
+                      color: AppColors.danger,
                     ),
                   ),
                 ],
@@ -535,14 +531,14 @@ class _RiwayatPageState extends State<RiwayatPage>
           Container(
             width: 80,
             height: 80,
-            decoration: BoxDecoration(
-              color: _tealLight,
+            decoration: const BoxDecoration(
+              color: AppColors.surfaceMuted,
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.history_rounded,
               size: 36,
-              color: _teal,
+              color: AppColors.textMuted,
             ),
           ),
           const SizedBox(height: 16),
@@ -611,13 +607,7 @@ class _RiwayatPageState extends State<RiwayatPage>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: AppShadows.sm,
         ),
         child: Padding(
           padding: const EdgeInsets.all(14),
@@ -627,12 +617,12 @@ class _RiwayatPageState extends State<RiwayatPage>
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: _tealLight,
+                  color: AppColors.surfaceMuted,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(
                   Icons.description_outlined,
-                  color: _teal,
+                  color: AppColors.textPrimary,
                   size: 22,
                 ),
               ),
@@ -731,19 +721,18 @@ class _ErrorBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.red[50],
+        color: AppColors.dangerSoft,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.red[200]!),
+        border: Border.all(color: AppColors.danger),
       ),
       child: Row(
         children: [
-          Icon(Icons.warning_amber_rounded, color: Colors.red[400], size: 20),
+          const Icon(Icons.warning_amber_rounded, color: AppColors.danger, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
-              style:
-                  TextStyle(color: Colors.red[600], fontSize: 13),
+              style: const TextStyle(color: AppColors.danger, fontSize: 13),
             ),
           ),
         ],

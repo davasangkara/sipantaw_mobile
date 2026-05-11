@@ -20,10 +20,6 @@ class RiwayatDetailPage extends StatefulWidget {
 
 class _RiwayatDetailPageState extends State<RiwayatDetailPage>
     with SingleTickerProviderStateMixin {
-  static const _teal = AppColors.teal;
-  static const _tealDark = AppColors.tealDeep;
-  static const _tealLight = AppColors.tealSoft;
-  static const _bg = AppColors.bg;
   static const _textDark = AppColors.textPrimary;
 
   Map<String, dynamic>? _data;
@@ -128,14 +124,14 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage>
         body: _loading
             ? const Center(
                 child: CircularProgressIndicator(
-                  color: _teal,
+                  color: AppColors.black,
                   strokeWidth: 2.5,
                 ),
               )
             : _error != null
                 ? _buildErrorState()
                 : RefreshIndicator(
-                    color: _teal,
+                    color: AppColors.black,
                     onRefresh: _loadData,
                     child: FadeTransition(
                       opacity: _fadeAnimation,
@@ -203,13 +199,13 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage>
             ElevatedButton(
               onPressed: _loadData,
               style: ElevatedButton.styleFrom(
-                backgroundColor: _teal,
+                backgroundColor: AppColors.black,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(
                     horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(AppRadius.pill)),
               ),
               child: const Text('Coba Lagi',
                   style: TextStyle(fontWeight: FontWeight.w700)),
@@ -252,17 +248,18 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage>
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [_teal, Color(0xFF1C8CA0)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: AppColors.black,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: _teal.withOpacity(0.3),
-            blurRadius: 20,
+            color: AppColors.softLime.withValues(alpha: 0.18),
+            blurRadius: 24,
             offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -275,7 +272,7 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage>
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(13),
                 ),
                 child: const Icon(Icons.description_outlined,
@@ -287,7 +284,7 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage>
                     horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: statusBg,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -321,13 +318,13 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage>
           Row(
             children: [
               Icon(Icons.calendar_today_rounded,
-                  size: 12, color: Colors.white.withOpacity(0.7)),
+                  size: 12, color: Colors.white.withValues(alpha: 0.7)),
               const SizedBox(width: 5),
               Text(
                 pelaporan['tanggal']?.toString() ?? '-',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -357,12 +354,12 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage>
                           Container(
                             width: 36,
                             height: 36,
-                            decoration: BoxDecoration(
-                              color: _tealLight,
+                            decoration: const BoxDecoration(
+                              color: AppColors.surfaceMuted,
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(Icons.check_rounded,
-                                color: _teal, size: 16),
+                                color: AppColors.textPrimary, size: 16),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -407,7 +404,7 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage>
                                   width: 48,
                                   height: 48,
                                   decoration: BoxDecoration(
-                                    color: _bg,
+                                    color: AppColors.surfaceMuted,
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: const Icon(Icons.broken_image_rounded,
@@ -425,21 +422,21 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage>
                     padding: const EdgeInsets.symmetric(
                         horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
-                      color: _tealLight,
+                      color: AppColors.surfaceMuted,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(Icons.access_time_rounded,
-                            size: 15, color: _teal),
+                            size: 15, color: AppColors.textPrimary),
                         const SizedBox(width: 7),
                         Text(
                           'Total: ${jamKerja['teks']} (${jamKerja['sesi_hadir']})',
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: _teal,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       ],
@@ -479,7 +476,7 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage>
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: _bg,
+              color: AppColors.surfaceMuted,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
@@ -508,7 +505,7 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage>
                 errorBuilder: (_, __, ___) => Container(
                   height: 100,
                   decoration: BoxDecoration(
-                    color: _bg,
+                    color: AppColors.surfaceMuted,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Center(
@@ -708,13 +705,7 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: AppShadows.sm,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -725,10 +716,10 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage>
                   width: 34,
                   height: 34,
                   decoration: BoxDecoration(
-                    color: _tealLight,
+                    color: AppColors.surfaceMuted,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(icon, color: _teal, size: 17),
+                  child: Icon(icon, color: AppColors.textPrimary, size: 17),
                 ),
                 const SizedBox(width: 10),
                 Text(
@@ -736,13 +727,13 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage>
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
-                    color: _textDark,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 14),
-            Divider(height: 1, color: Colors.grey[100]),
+            const Divider(height: 1, color: AppColors.border),
             const SizedBox(height: 14),
             child,
           ],

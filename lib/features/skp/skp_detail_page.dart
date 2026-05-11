@@ -14,10 +14,6 @@ class SkpDetailPage extends StatefulWidget {
 }
 
 class _SkpDetailPageState extends State<SkpDetailPage> {
-  static const _teal = AppColors.teal;
-  static const _tealDark = AppColors.tealDeep;
-  static const _tealLight = AppColors.tealSoft;
-  static const _bg = AppColors.bg;
   static const _textDark = AppColors.textPrimary;
 
   Map? _data;
@@ -53,7 +49,7 @@ class _SkpDetailPageState extends State<SkpDetailPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('SKP berhasil diajukan.'),
-          backgroundColor: _teal,
+          backgroundColor: AppColors.black,
         ));
         _loadData();
       }
@@ -117,7 +113,7 @@ class _SkpDetailPageState extends State<SkpDetailPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('SKP berhasil dihapus.'),
-          backgroundColor: _teal,
+          backgroundColor: AppColors.black,
         ));
         Navigator.pop(context, true);
       }
@@ -278,7 +274,7 @@ class _SkpDetailPageState extends State<SkpDetailPage> {
         body: _loading
             ? const Center(
                 child: CircularProgressIndicator(
-                  color: _teal,
+                  color: AppColors.black,
                   strokeWidth: 2.5,
                 ),
               )
@@ -299,13 +295,13 @@ class _SkpDetailPageState extends State<SkpDetailPage> {
                                 width: 46,
                                 height: 46,
                                 decoration: BoxDecoration(
-                                  color: _tealLight,
+                                  color: AppColors.surfaceMuted,
                                   borderRadius:
                                       BorderRadius.circular(14),
                                 ),
                                 child: const Icon(
                                   Icons.emoji_events_rounded,
-                                  color: _teal,
+                                  color: AppColors.textPrimary,
                                   size: 22,
                                 ),
                               ),
@@ -368,7 +364,7 @@ class _SkpDetailPageState extends State<SkpDetailPage> {
                             ],
                           ),
                           const SizedBox(height: 14),
-                          Divider(height: 1, color: Colors.grey[100]),
+                          const Divider(height: 1, color: AppColors.border),
                           const SizedBox(height: 14),
                           Row(
                             children: [
@@ -423,7 +419,7 @@ class _SkpDetailPageState extends State<SkpDetailPage> {
                                   width: 3,
                                   height: 14,
                                   decoration: BoxDecoration(
-                                    color: _teal,
+                                    color: AppColors.black,
                                     borderRadius:
                                         BorderRadius.circular(2),
                                   ),
@@ -434,7 +430,7 @@ class _SkpDetailPageState extends State<SkpDetailPage> {
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w800,
-                                    color: _textDark,
+                                    color: AppColors.textPrimary,
                                   ),
                                 ),
                               ],
@@ -447,7 +443,7 @@ class _SkpDetailPageState extends State<SkpDetailPage> {
                                       padding:
                                           const EdgeInsets.all(14),
                                       decoration: BoxDecoration(
-                                        color: _bg,
+                                        color: AppColors.surfaceMuted,
                                         borderRadius:
                                             BorderRadius.circular(12),
                                       ),
@@ -464,10 +460,10 @@ class _SkpDetailPageState extends State<SkpDetailPage> {
                                                     vertical: 4),
                                                 decoration:
                                                     BoxDecoration(
-                                                  color: _tealLight,
+                                                  color: AppColors.border,
                                                   borderRadius:
                                                       BorderRadius
-                                                          .circular(20),
+                                                          .circular(AppRadius.pill),
                                                 ),
                                                 child: Text(
                                                   'Semester ${r['semester']}',
@@ -476,7 +472,7 @@ class _SkpDetailPageState extends State<SkpDetailPage> {
                                                     fontSize: 11,
                                                     fontWeight:
                                                         FontWeight.w700,
-                                                    color: _teal,
+                                                    color: AppColors.textPrimary,
                                                   ),
                                                 ),
                                               ),
@@ -540,24 +536,8 @@ class _SkpDetailPageState extends State<SkpDetailPage> {
                           padding:
                               const EdgeInsets.symmetric(vertical: 15),
                           decoration: BoxDecoration(
-                            gradient: _ajuking
-                                ? null
-                                : const LinearGradient(
-                                    colors: [_teal, _tealDark],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                            color: _ajuking ? Colors.grey[300] : null,
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: _ajuking
-                                ? []
-                                : [
-                                    BoxShadow(
-                                      color: _teal.withOpacity(0.35),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 5),
-                                    ),
-                                  ],
+                            color: _ajuking ? Colors.grey[300] : AppColors.black,
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
                           ),
                           child: Center(
                             child: _ajuking
@@ -602,14 +582,8 @@ class _SkpDetailPageState extends State<SkpDetailPage> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: AppShadows.sm,
         ),
         child: child,
       );

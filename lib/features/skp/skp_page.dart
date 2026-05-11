@@ -15,10 +15,6 @@ class SkpPage extends StatefulWidget {
 
 class _SkpPageState extends State<SkpPage>
     with SingleTickerProviderStateMixin {
-  static const _teal = AppColors.teal;
-  static const _tealDark = AppColors.tealDeep;
-  static const _tealLight = AppColors.tealSoft;
-  static const _bg = AppColors.bg;
   static const _textDark = AppColors.textPrimary;
 
   List _skpList = [];
@@ -252,12 +248,12 @@ class _SkpPageState extends State<SkpPage>
         body: _loading
             ? const Center(
                 child: CircularProgressIndicator(
-                  color: _teal,
+                  color: AppColors.black,
                   strokeWidth: 2.5,
                 ),
               )
             : RefreshIndicator(
-                color: _teal,
+                color: AppColors.black,
                 onRefresh: _loadData,
                 child: FadeTransition(
                   opacity: _fadeAnimation,
@@ -284,14 +280,14 @@ class _SkpPageState extends State<SkpPage>
                                               height: 20,
                                               child:
                                                   CircularProgressIndicator(
-                                                color: _teal,
+                                                color: AppColors.black,
                                                 strokeWidth: 2,
                                               ),
                                             )
                                           : const Text(
                                               'Muat lebih banyak',
                                               style: TextStyle(
-                                                color: _teal,
+                                                color: AppColors.black,
                                                 fontWeight: FontWeight.w600,
                                               ),
                                             ),
@@ -319,13 +315,13 @@ class _SkpPageState extends State<SkpPage>
             width: 80,
             height: 80,
             decoration: const BoxDecoration(
-              color: _tealLight,
+              color: AppColors.surfaceMuted,
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.emoji_events_rounded,
               size: 36,
-              color: _teal,
+              color: AppColors.textMuted,
             ),
           ),
           const SizedBox(height: 16),
@@ -353,17 +349,18 @@ class _SkpPageState extends State<SkpPage>
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [_teal, _tealDark],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: AppColors.black,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: _teal.withOpacity(0.3),
-            blurRadius: 16,
+            color: AppColors.softLime.withValues(alpha: 0.15),
+            blurRadius: 20,
             offset: const Offset(0, 6),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -388,7 +385,7 @@ class _SkpPageState extends State<SkpPage>
   Widget _statDivider() => Container(
         width: 1,
         height: 32,
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha: 0.2),
       );
 
   Widget _statCol(String label, String value, Color color) => Column(
@@ -437,13 +434,7 @@ class _SkpPageState extends State<SkpPage>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: AppShadows.sm,
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -456,12 +447,12 @@ class _SkpPageState extends State<SkpPage>
                     width: 46,
                     height: 46,
                     decoration: BoxDecoration(
-                      color: _tealLight,
+                      color: AppColors.surfaceMuted,
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Icon(
                       Icons.emoji_events_rounded,
-                      color: _teal,
+                      color: AppColors.textPrimary,
                       size: 22,
                     ),
                   ),
@@ -618,7 +609,7 @@ class _SkpPageState extends State<SkpPage>
                     width: 4,
                     height: 18,
                     decoration: BoxDecoration(
-                      color: _teal,
+                      color: AppColors.black,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -628,7 +619,7 @@ class _SkpPageState extends State<SkpPage>
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
-                      color: _textDark,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ],
@@ -659,12 +650,12 @@ class _SkpPageState extends State<SkpPage>
                       decoration: BoxDecoration(
                         color: selected
                             ? (cfg['bg'] as Color)
-                            : _bg,
-                        borderRadius: BorderRadius.circular(20),
+                            : AppColors.surfaceMuted,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
                         border: Border.all(
                           color: selected
                               ? (cfg['color'] as Color)
-                              : Colors.grey.withOpacity(0.2),
+                              : AppColors.border,
                         ),
                       ),
                       child: Text(
@@ -705,12 +696,12 @@ class _SkpPageState extends State<SkpPage>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
-                          color: selected ? _tealLight : _bg,
-                          borderRadius: BorderRadius.circular(20),
+                          color: selected ? AppColors.surfaceMuted : AppColors.surfaceMuted,
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                           border: Border.all(
                             color: selected
-                                ? _teal
-                                : Colors.grey.withOpacity(0.2),
+                                ? AppColors.black
+                                : AppColors.border,
                           ),
                         ),
                         child: Text(
@@ -718,7 +709,7 @@ class _SkpPageState extends State<SkpPage>
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: selected ? _teal : Colors.grey[600],
+                            color: selected ? AppColors.black : AppColors.textMuted,
                           ),
                         ),
                       ),
@@ -743,10 +734,9 @@ class _SkpPageState extends State<SkpPage>
                         padding:
                             const EdgeInsets.symmetric(vertical: 13),
                         decoration: BoxDecoration(
-                          color: _bg,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                              color: Colors.grey.withOpacity(0.2)),
+                          color: AppColors.surfaceMuted,
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          border: Border.all(color: AppColors.border),
                         ),
                         child: Center(
                           child: Text(
@@ -772,19 +762,8 @@ class _SkpPageState extends State<SkpPage>
                         padding:
                             const EdgeInsets.symmetric(vertical: 13),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [_teal, _tealDark],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: _teal.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
+                          color: AppColors.black,
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
                         child: const Center(
                           child: Text(

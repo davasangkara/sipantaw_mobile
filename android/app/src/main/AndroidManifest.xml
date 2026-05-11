@@ -1,4 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Biometric / Face ID -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+    <uses-permission android:name="android.permission.USE_FINGERPRINT"/>
+    <!-- Internet for AI API -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="sipantaw_mobile"
         android:name="${applicationName}"

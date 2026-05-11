@@ -15,10 +15,6 @@ class CutiPage extends StatefulWidget {
 
 class _CutiPageState extends State<CutiPage>
     with SingleTickerProviderStateMixin {
-  static const _teal = AppColors.teal;
-  static const _tealDark = AppColors.tealDeep;
-  static const _tealLight = AppColors.tealSoft;
-  static const _bg = AppColors.bg;
   static const _textDark = AppColors.textPrimary;
 
   List _cutiList = [];
@@ -192,12 +188,12 @@ class _CutiPageState extends State<CutiPage>
         body: _loading
             ? const Center(
                 child: CircularProgressIndicator(
-                  color: _teal,
+                  color: AppColors.black,
                   strokeWidth: 2.5,
                 ),
               )
             : RefreshIndicator(
-                color: _teal,
+                color: AppColors.black,
                 onRefresh: _loadData,
                 child: _error != null
                     ? ListView(
@@ -234,13 +230,13 @@ class _CutiPageState extends State<CutiPage>
             width: 80,
             height: 80,
             decoration: const BoxDecoration(
-              color: _tealLight,
+              color: AppColors.surfaceMuted,
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.beach_access_rounded,
               size: 36,
-              color: _teal,
+              color: AppColors.textMuted,
             ),
           ),
           const SizedBox(height: 16),
@@ -286,13 +282,7 @@ class _CutiPageState extends State<CutiPage>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: AppShadows.sm,
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -305,12 +295,12 @@ class _CutiPageState extends State<CutiPage>
                     width: 46,
                     height: 46,
                     decoration: BoxDecoration(
-                      color: _tealLight,
+                      color: AppColors.surfaceMuted,
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Icon(
                       Icons.luggage_rounded,
-                      color: _teal,
+                      color: AppColors.textPrimary,
                       size: 22,
                     ),
                   ),
@@ -375,7 +365,7 @@ class _CutiPageState extends State<CutiPage>
                 ],
               ),
               const SizedBox(height: 12),
-              Divider(height: 1, color: Colors.grey[100]),
+              const Divider(height: 1, color: AppColors.border),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -409,14 +399,14 @@ class _CutiPageState extends State<CutiPage>
                   width: double.infinity,
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: _bg,
+                    color: AppColors.surfaceMuted,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     c['keterangan'].toString(),
-                    style: TextStyle(
+                    style: const TextStyle(
                         fontSize: 11,
-                        color: Colors.grey[500],
+                        color: AppColors.textMuted,
                         height: 1.4),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -436,12 +426,12 @@ class _CutiPageState extends State<CutiPage>
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 11, color: Colors.grey[400]),
+              Icon(icon, size: 11, color: AppColors.textMuted),
               const SizedBox(width: 3),
               Flexible(
                 child: Text(
                   label,
-                  style: TextStyle(fontSize: 10, color: Colors.grey[400]),
+                  style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -453,7 +443,7 @@ class _CutiPageState extends State<CutiPage>
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: _textDark,
+              color: AppColors.textPrimary,
             ),
             overflow: TextOverflow.ellipsis,
           ),
@@ -470,18 +460,18 @@ class _ErrorBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.red[50],
+        color: AppColors.dangerSoft,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.red[200]!),
+        border: Border.all(color: AppColors.danger),
       ),
       child: Row(
         children: [
-          Icon(Icons.warning_amber_rounded, color: Colors.red[400], size: 20),
+          const Icon(Icons.warning_amber_rounded, color: AppColors.danger, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
-              style: TextStyle(color: Colors.red[600], fontSize: 13),
+              style: const TextStyle(color: AppColors.danger, fontSize: 13),
             ),
           ),
         ],

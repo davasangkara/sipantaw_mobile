@@ -12,10 +12,6 @@ class LemburFormPage extends StatefulWidget {
 }
 
 class _LemburFormPageState extends State<LemburFormPage> {
-  static const _teal = AppColors.teal;
-  static const _tealDark = AppColors.tealDeep;
-  static const _tealLight = AppColors.tealSoft;
-  static const _bg = AppColors.bg;
   static const _textDark = AppColors.textPrimary;
 
   bool _submitting = false;
@@ -39,7 +35,7 @@ class _LemburFormPageState extends State<LemburFormPage> {
       lastDate: now,
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(primary: _teal),
+          colorScheme: const ColorScheme.light(primary: AppColors.black),
         ),
         child: child!,
       ),
@@ -55,7 +51,7 @@ class _LemburFormPageState extends State<LemburFormPage> {
           : (_jamSelesai ?? const TimeOfDay(hour: 19, minute: 0)),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(primary: _teal),
+          colorScheme: const ColorScheme.light(primary: AppColors.black),
         ),
         child: child!,
       ),
@@ -125,7 +121,7 @@ class _LemburFormPageState extends State<LemburFormPage> {
   void _showSnack(String msg, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg),
-      backgroundColor: isError ? Colors.red : _teal,
+      backgroundColor: isError ? Colors.red : AppColors.black,
     ));
   }
 
@@ -230,19 +226,19 @@ class _LemburFormPageState extends State<LemburFormPage> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 10),
                         decoration: BoxDecoration(
-                          color: _tealLight,
+                          color: AppColors.surfaceMuted,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
                           children: [
                             const Icon(Icons.info_outline_rounded,
-                                size: 15, color: _teal),
+                                size: 15, color: AppColors.textPrimary),
                             const SizedBox(width: 8),
                             Text(
                               'Estimasi durasi: ${durasi.toStringAsFixed(1)} jam',
                               style: const TextStyle(
                                 fontSize: 12,
-                                color: _teal,
+                                color: AppColors.textPrimary,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -278,25 +274,8 @@ class _LemburFormPageState extends State<LemburFormPage> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     decoration: BoxDecoration(
-                      gradient: _submitting
-                          ? null
-                          : const LinearGradient(
-                              colors: [_teal, _tealDark],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                      color:
-                          _submitting ? Colors.grey[300] : null,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: _submitting
-                          ? []
-                          : [
-                              BoxShadow(
-                                color: _teal.withOpacity(0.35),
-                                blurRadius: 12,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
+                      color: _submitting ? Colors.grey[300] : AppColors.black,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                     child: Center(
                       child: _submitting
@@ -332,14 +311,8 @@ class _LemburFormPageState extends State<LemburFormPage> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: AppShadows.sm,
         ),
         child: child,
       );
@@ -362,14 +335,14 @@ class _LemburFormPageState extends State<LemburFormPage> {
           padding:
               const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
           decoration: BoxDecoration(
-            color: _bg,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.withOpacity(0.15)),
+            color: AppColors.surfaceMuted,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
           ),
           child: Row(
             children: [
               const Icon(Icons.calendar_today_rounded,
-                  size: 16, color: _teal),
+                  size: 16, color: AppColors.textPrimary),
               const SizedBox(width: 10),
               Text(
                 _tanggal != null
@@ -378,8 +351,8 @@ class _LemburFormPageState extends State<LemburFormPage> {
                 style: TextStyle(
                   fontSize: 13,
                   color: _tanggal != null
-                      ? _textDark
-                      : Colors.grey[400],
+                      ? AppColors.textPrimary
+                      : AppColors.textMuted,
                   fontWeight: _tanggal != null
                       ? FontWeight.w600
                       : FontWeight.w400,
@@ -401,14 +374,14 @@ class _LemburFormPageState extends State<LemburFormPage> {
           padding:
               const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
           decoration: BoxDecoration(
-            color: _bg,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.withOpacity(0.15)),
+            color: AppColors.surfaceMuted,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
           ),
           child: Row(
             children: [
               const Icon(Icons.access_time_rounded,
-                  size: 16, color: _teal),
+                  size: 16, color: AppColors.textPrimary),
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
@@ -416,7 +389,7 @@ class _LemburFormPageState extends State<LemburFormPage> {
                   style: TextStyle(
                     fontSize: 13,
                     color:
-                        time != null ? _textDark : Colors.grey[400],
+                        time != null ? AppColors.textPrimary : AppColors.textMuted,
                     fontWeight: time != null
                         ? FontWeight.w600
                         : FontWeight.w400,
@@ -431,22 +404,22 @@ class _LemburFormPageState extends State<LemburFormPage> {
 
   InputDecoration _inputDeco(String hint) => InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+        hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
         contentPadding: const EdgeInsets.symmetric(
             horizontal: 12, vertical: 12),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.withOpacity(0.15)),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.withOpacity(0.15)),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _teal, width: 1.5),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.black, width: 1.5),
         ),
         filled: true,
-        fillColor: _bg,
+        fillColor: AppColors.surfaceMuted,
       );
 }

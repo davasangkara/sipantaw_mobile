@@ -15,10 +15,6 @@ class CutiFormPage extends StatefulWidget {
 
 class _CutiFormPageState extends State<CutiFormPage>
     with SingleTickerProviderStateMixin {
-  static const _teal = AppColors.teal;
-  static const _tealDark = AppColors.tealDeep;
-  static const _tealLight = AppColors.tealSoft;
-  static const _bg = AppColors.bg;
   static const _textDark = AppColors.textPrimary;
 
   List _jenisCutiList = [];
@@ -85,7 +81,7 @@ class _CutiFormPageState extends State<CutiFormPage>
       lastDate: DateTime(now.year + 2),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(primary: _teal),
+          colorScheme: const ColorScheme.light(primary: AppColors.black),
         ),
         child: child!,
       ),
@@ -146,7 +142,7 @@ class _CutiFormPageState extends State<CutiFormPage>
   void _showSnack(String msg, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg, style: const TextStyle(fontWeight: FontWeight.w600)),
-      backgroundColor: isError ? Colors.red : _teal,
+      backgroundColor: isError ? Colors.red : AppColors.black,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ));
@@ -242,7 +238,7 @@ class _CutiFormPageState extends State<CutiFormPage>
         body: _loadingForm
             ? const Center(
                 child: CircularProgressIndicator(
-                  color: _teal,
+                  color: AppColors.black,
                   strokeWidth: 2.5,
                 ),
               )
@@ -276,11 +272,11 @@ class _CutiFormPageState extends State<CutiFormPage>
                           ElevatedButton(
                             onPressed: _loadFormData,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: _teal,
+                              backgroundColor: AppColors.black,
                               foregroundColor: Colors.white,
                               elevation: 0,
                               shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
+                                  borderRadius: BorderRadius.circular(AppRadius.pill)),
                             ),
                             child: const Text('Coba Lagi',
                                 style:
@@ -378,20 +374,20 @@ class _CutiFormPageState extends State<CutiFormPage>
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 14, vertical: 11),
                                     decoration: BoxDecoration(
-                                      color: _tealLight,
+                                      color: AppColors.surfaceMuted,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Row(
                                       children: [
                                         const Icon(Icons.info_rounded,
-                                            size: 15, color: _teal),
+                                            size: 15, color: AppColors.textPrimary),
                                         const SizedBox(width: 8),
                                         Text(
                                           'Estimasi: $_estimasiHari hari kalender',
                                           style: const TextStyle(
                                             fontSize: 12,
                                             fontWeight: FontWeight.w700,
-                                            color: _teal,
+                                            color: AppColors.textPrimary,
                                           ),
                                         ),
                                       ],
@@ -417,11 +413,11 @@ class _CutiFormPageState extends State<CutiFormPage>
                                   decoration: InputDecoration(
                                     hintText:
                                         'Tuliskan alasan pengajuan cuti...',
-                                    hintStyle: TextStyle(
-                                        color: Colors.grey[400], fontSize: 13),
+                                    hintStyle: const TextStyle(
+                                        color: AppColors.textMuted, fontSize: 13),
                                     contentPadding: const EdgeInsets.all(14),
                                     filled: true,
-                                    fillColor: _bg,
+                                    fillColor: AppColors.surfaceMuted,
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide: BorderSide.none,
@@ -429,7 +425,7 @@ class _CutiFormPageState extends State<CutiFormPage>
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide: const BorderSide(
-                                          color: _teal, width: 1.5),
+                                          color: AppColors.black, width: 1.5),
                                     ),
                                   ),
                                 ),
@@ -444,18 +440,18 @@ class _CutiFormPageState extends State<CutiFormPage>
                                       padding: const EdgeInsets.symmetric(
                                           vertical: 14),
                                       decoration: BoxDecoration(
-                                        color: _tealLight,
+                                        color: AppColors.surfaceMuted,
                                         borderRadius:
                                             BorderRadius.circular(12),
                                         border: Border.all(
-                                          color: _teal.withOpacity(0.3),
+                                          color: AppColors.border,
                                           width: 1.5,
                                         ),
                                       ),
                                       child: Column(
                                         children: [
-                                          Icon(Icons.upload_file_rounded,
-                                              color: _teal, size: 26),
+                                          const Icon(Icons.upload_file_rounded,
+                                              color: AppColors.textPrimary, size: 26),
                                           const SizedBox(height: 6),
                                           Text(
                                             _dokumenList.isEmpty
@@ -464,14 +460,14 @@ class _CutiFormPageState extends State<CutiFormPage>
                                             style: const TextStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.w700,
-                                              color: _teal,
+                                              color: AppColors.textPrimary,
                                             ),
                                           ),
-                                          Text(
+                                          const Text(
                                             'PDF, JPG, PNG',
                                             style: TextStyle(
                                                 fontSize: 10,
-                                                color: Colors.grey[400]),
+                                                color: AppColors.textMuted),
                                           ),
                                         ],
                                       ),
@@ -485,7 +481,7 @@ class _CutiFormPageState extends State<CutiFormPage>
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 12, vertical: 10),
                                           decoration: BoxDecoration(
-                                            color: _bg,
+                                            color: AppColors.surfaceMuted,
                                             borderRadius:
                                                 BorderRadius.circular(10),
                                           ),
@@ -495,7 +491,7 @@ class _CutiFormPageState extends State<CutiFormPage>
                                                   Icons
                                                       .insert_drive_file_rounded,
                                                   size: 16,
-                                                  color: _teal),
+                                                  color: AppColors.textPrimary),
                                               const SizedBox(width: 8),
                                               Expanded(
                                                 child: Text(
@@ -539,15 +535,14 @@ class _CutiFormPageState extends State<CutiFormPage>
                             child: ElevatedButton(
                               onPressed: _submitting ? null : _submit,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: _teal,
+                                backgroundColor: AppColors.black,
                                 foregroundColor: Colors.white,
-                                disabledBackgroundColor:
-                                    _teal.withOpacity(0.5),
+                                disabledBackgroundColor: AppColors.surfaceMuted,
                                 elevation: 0,
                                 padding: const EdgeInsets.symmetric(
                                     vertical: 15),
                                 shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14)),
+                                    borderRadius: BorderRadius.circular(AppRadius.pill)),
                               ),
                               child: _submitting
                                   ? const SizedBox(
@@ -583,13 +578,7 @@ class _CutiFormPageState extends State<CutiFormPage>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: AppShadows.sm,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -600,10 +589,10 @@ class _CutiFormPageState extends State<CutiFormPage>
                   width: 34,
                   height: 34,
                   decoration: BoxDecoration(
-                    color: _tealLight,
+                    color: AppColors.surfaceMuted,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(icon, color: _teal, size: 17),
+                  child: Icon(icon, color: AppColors.textPrimary, size: 17),
                 ),
                 const SizedBox(width: 10),
                 Text(
@@ -611,13 +600,13 @@ class _CutiFormPageState extends State<CutiFormPage>
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
-                    color: _textDark,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 14),
-            Divider(height: 1, color: Colors.grey[100]),
+            const Divider(height: 1, color: AppColors.border),
             const SizedBox(height: 14),
             child,
           ],
@@ -660,22 +649,22 @@ class _CutiFormPageState extends State<CutiFormPage>
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           filled: true,
-          fillColor: _bg,
+          fillColor: AppColors.surfaceMuted,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: _teal, width: 1.5),
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: AppColors.black, width: 1.5),
           ),
         ),
-        hint: Text(hint,
-            style: TextStyle(color: Colors.grey[400], fontSize: 13)),
+        hint: const Text('Pilih...',
+            style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
         items: items,
         onChanged: onChanged,
         dropdownColor: Colors.white,
@@ -693,18 +682,18 @@ class _CutiFormPageState extends State<CutiFormPage>
           padding:
               const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
           decoration: BoxDecoration(
-            color: _bg,
-            borderRadius: BorderRadius.circular(12),
+            color: AppColors.surfaceMuted,
+            borderRadius: BorderRadius.circular(14),
             border: date != null
-                ? Border.all(color: _teal.withOpacity(0.4), width: 1.5)
-                : null,
+                ? const Border.fromBorderSide(BorderSide(color: AppColors.black, width: 1.5))
+                : Border.all(color: AppColors.border),
           ),
           child: Row(
             children: [
               Icon(
                 Icons.calendar_today_rounded,
                 size: 16,
-                color: date != null ? _teal : Colors.grey[400],
+                color: date != null ? AppColors.textPrimary : AppColors.textMuted,
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -717,14 +706,14 @@ class _CutiFormPageState extends State<CutiFormPage>
                     fontWeight: date != null
                         ? FontWeight.w700
                         : FontWeight.w400,
-                    color: date != null ? _textDark : Colors.grey[400],
+                    color: date != null ? AppColors.textPrimary : AppColors.textMuted,
                   ),
                 ),
               ),
-              Icon(
+              const Icon(
                 Icons.chevron_right_rounded,
                 size: 18,
-                color: Colors.grey[300],
+                color: AppColors.textMuted,
               ),
             ],
           ),

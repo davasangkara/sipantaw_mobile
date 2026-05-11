@@ -17,8 +17,6 @@ class AbsensiFotoPage extends StatefulWidget {
 }
 
 class _AbsensiFotoPageState extends State<AbsensiFotoPage> {
-  static const _teal = AppColors.teal;
-
   bool _loading = true;
   Map<String, dynamic>? _statusAbsensi;
   final _now = DateTime.now();
@@ -102,7 +100,7 @@ class _AbsensiFotoPageState extends State<AbsensiFotoPage> {
       context: context,
       barrierDismissible: false,
       builder: (_) => const Center(
-        child: CircularProgressIndicator(color: _teal),
+        child: CircularProgressIndicator(color: AppColors.black),
       ),
     );
 
@@ -115,7 +113,9 @@ class _AbsensiFotoPageState extends State<AbsensiFotoPage> {
           await Geolocator.requestPermission();
         }
         final pos = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.medium,
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.medium,
+          ),
         ).timeout(const Duration(seconds: 5));
         lokasi = '${pos.latitude}, ${pos.longitude}';
       } catch (_) {}
@@ -143,7 +143,7 @@ class _AbsensiFotoPageState extends State<AbsensiFotoPage> {
       if (res.data['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(res.data['message'] ?? 'Absen berhasil!'),
-          backgroundColor: _teal,
+          backgroundColor: AppColors.black,
         ));
         _loadStatus();
       } else {
@@ -239,36 +239,36 @@ class _AbsensiFotoPageState extends State<AbsensiFotoPage> {
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: _teal))
+          ? const Center(child: CircularProgressIndicator(color: AppColors.black))
           : RefreshIndicator(
-              color: _teal,
+              color: AppColors.black,
               onRefresh: _loadStatus,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 child: Column(
                   children: [
-                    // Info banner
+                    // Info banner — premium style
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.blue[50],
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.blue[200]!),
+                        color: AppColors.surfaceMuted,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.border),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.info_outline,
-                              color: Colors.blue[700], size: 18),
-                          const SizedBox(width: 8),
-                          Expanded(
+                          const Icon(Icons.info_outline,
+                              color: AppColors.textMuted, size: 18),
+                          const SizedBox(width: 10),
+                          const Expanded(
                             child: Text(
                               'Setiap sesi absen dibuka sesuai jam aktif. '
                               'Sesi yang sudah lewat waktunya akan terkunci otomatis. '
                               'Foto otomatis diberi watermark waktu & lokasi.',
                               style: TextStyle(
-                                  fontSize: 12, color: Colors.blue[700]),
+                                  fontSize: 12, color: AppColors.textMuted),
                             ),
                           ),
                         ],
@@ -295,17 +295,17 @@ class _AbsensiFotoPageState extends State<AbsensiFotoPage> {
                       ),
                       icon: const Icon(
                         Icons.calendar_month,
-                        color: _teal,
+                        color: AppColors.black,
                       ),
                       label: const Text(
                         'Absensi Jika Tidak Melakukan WFA',
-                        style: TextStyle(color: _teal),
+                        style: TextStyle(color: AppColors.black),
                       ),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: _teal),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: const BorderSide(color: AppColors.black),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
                         minimumSize: const Size(double.infinity, 0),
                       ),
@@ -335,6 +335,7 @@ class _AbsensiFotoPageState extends State<AbsensiFotoPage> {
     final fotoUrl = dataAbsen?['foto']?.toString();
     final lokasi = dataAbsen?['lokasi']?.toString();
 
+    // Pertahankan warna semantik per jenis (orange/amber/red)
     Color headerColor = switch (jenis) {
       1 => Colors.orange,
       2 => Colors.amber[700]!,
@@ -345,12 +346,12 @@ class _AbsensiFotoPageState extends State<AbsensiFotoPage> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -358,26 +359,37 @@ class _AbsensiFotoPageState extends State<AbsensiFotoPage> {
         children: [
           // Header
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
               children: [
-                Icon(icon, color: headerColor, size: 20),
-                const SizedBox(width: 8),
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: headerColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: headerColor, size: 18),
+                ),
+                const SizedBox(width: 10),
                 Text(
                   'Absen $nama',
                   style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w700),
+                      fontSize: 14, fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary),
                 ),
                 const Spacer(),
                 Text(
                   jamRange,
-                  style: TextStyle(
-                      fontSize: 12, color: _teal, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textMuted,
+                      fontWeight: FontWeight.w600),
                 ),
               ],
             ),
           ),
-          const Divider(height: 1),
+          const Divider(height: 1, color: AppColors.border),
 
           // Body
           Padding(
@@ -397,7 +409,7 @@ class _AbsensiFotoPageState extends State<AbsensiFotoPage> {
         // Foto
         if (fotoUrl != null)
           ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             child: Image.network(
               fotoUrl,
               height: 160,
@@ -405,9 +417,9 @@ class _AbsensiFotoPageState extends State<AbsensiFotoPage> {
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
                 height: 160,
-                color: Colors.grey[100],
+                color: AppColors.surfaceMuted,
                 child: const Icon(Icons.image_not_supported,
-                    color: Colors.grey, size: 48),
+                    color: AppColors.textMuted, size: 48),
               ),
             ),
           ),
@@ -429,12 +441,12 @@ class _AbsensiFotoPageState extends State<AbsensiFotoPage> {
           const SizedBox(height: 4),
           Row(
             children: [
-              Icon(Icons.location_on, size: 14, color: Colors.grey[400]),
+              const Icon(Icons.location_on, size: 14, color: AppColors.textMuted),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
                   lokasi,
-                  style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                  style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -453,17 +465,15 @@ class _AbsensiFotoPageState extends State<AbsensiFotoPage> {
           height: 100,
           width: double.infinity,
           decoration: BoxDecoration(
-            color: aktif
-                ? _teal.withOpacity(0.05)
-                : Colors.orange.withOpacity(0.05),
-            borderRadius: BorderRadius.circular(10),
+            color: AppColors.surfaceMuted,
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 aktif ? Icons.camera_alt_outlined : Icons.lock_outline,
-                color: aktif ? _teal : Colors.grey[400],
+                color: aktif ? AppColors.black : AppColors.textMuted,
                 size: 32,
               ),
               const SizedBox(height: 6),
@@ -475,7 +485,7 @@ class _AbsensiFotoPageState extends State<AbsensiFotoPage> {
                         : 'Dibuka pukul ${_jamRange(jenis).split(' ')[0]}',
                 style: TextStyle(
                   fontSize: 12,
-                  color: aktif ? _teal : Colors.grey[500],
+                  color: aktif ? AppColors.textPrimary : AppColors.textMuted,
                 ),
               ),
             ],
@@ -491,11 +501,11 @@ class _AbsensiFotoPageState extends State<AbsensiFotoPage> {
               label: Text('Absen $nama Sekarang',
                   style: const TextStyle(fontWeight: FontWeight.w700)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: _teal,
+                backgroundColor: AppColors.black,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                    borderRadius: BorderRadius.circular(AppRadius.pill)),
               ),
             ),
           ),

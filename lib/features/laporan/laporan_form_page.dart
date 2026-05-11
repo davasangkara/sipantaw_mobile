@@ -6,9 +6,11 @@ import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_config.dart';
-import 'package:intl/date_symbol_data_local.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/premium_widgets.dart';
+import '../../core/storage/token_storage.dart';
+import '../../core/services/ai_laporan_service.dart';
+import '../../core/services/location_service.dart';
 import '../absensi/absensi_foto_page.dart';
 
 class LaporanFormPage extends StatefulWidget {
@@ -20,11 +22,7 @@ class LaporanFormPage extends StatefulWidget {
 
 class _LaporanFormPageState extends State<LaporanFormPage>
     with SingleTickerProviderStateMixin {
-  // ── Design tokens (sama dengan SkpPage) ──────────────────
-  static const _teal      = AppColors.teal;
-  static const _tealDark  = AppColors.tealDeep;
-  static const _tealLight = AppColors.tealSoft;
-  static const _bg        = AppColors.bg;
+  // ── Design tokens ──────────────────────────────────────
   static const _textDark  = AppColors.textPrimary;
   // ─────────────────────────────────────────────────────────
 
@@ -57,6 +55,8 @@ class _LaporanFormPageState extends State<LaporanFormPage>
   String? _dokumenNama;
 
   bool _submitting = false;
+  bool _aiGenerating = false; // state AI loading
+  String? _aiLocationStatus;  // status deteksi lokasi untuk UI
 
   late AnimationController _fadeController;
   late Animation<double>   _fadeAnimation;
@@ -108,6 +108,124 @@ class _LaporanFormPageState extends State<LaporanFormPage>
     } catch (_) {
       setState(() => _loadingForm = false);
       _showSnack('Gagal memuat data form.', isError: true);
+    }
+  }
+
+  // ── AI Generate ───────────────────────────────────────────
+
+  Future<void> _generateWithAI() async {
+    if (_kegiatanId == null) {
+      _showSnack('Pilih jenis kegiatan terlebih dahulu.', isError: true);
+      return;
+    }
+
+    setState(() {
+      _aiGenerating = true;
+      _aiLocationStatus = 'Mendeteksi lokasi...';
+    });
+
+    try {
+      // ── Step 1: Deteksi lokasi GPS + reverse geocode ──────
+      LocationAddress? location;
+      try {
+        location = await LocationService.getAddressFromCurrentLocation();
+        if (mounted) {
+          setState(() => _aiLocationStatus =
+              location != null ? 'Lokasi ditemukan ✓' : 'Mengisi form...');
+        }
+      } catch (_) {
+        if (mounted) setState(() => _aiLocationStatus = 'Mengisi form...');
+      }
+
+      // ── Step 2: Isi field alamat dari GPS ─────────────────
+      if (location != null) {
+        _alamatController.text    = location.alamatJalan;
+        _rtrwController.text      = location.rtrw;
+        _kelurahanController.text = location.kelurahan;
+        _kecamatanController.text = location.kecamatan;
+        _kabkotaController.text   = location.kabkota;
+      }
+
+      // ── Step 3: Ambil data pegawai ────────────────────────
+      if (mounted) setState(() => _aiLocationStatus = 'Membuat laporan...');
+
+      final pegawai     = await TokenStorage.getPegawai();
+      final jabatan     = pegawai['jabatan'] ?? 'Pegawai';
+      final unit        = pegawai['unit'] ?? 'Unit Kerja';
+      final kegiatanNama = _kegiatanList
+          .firstWhere(
+            (k) => k['KegiatanId'] == _kegiatanId,
+            orElse: () => {'Kegiatan': 'Kegiatan WFA'},
+          )['Kegiatan']
+          ?.toString() ?? 'Kegiatan WFA';
+
+      // ── Step 4: Generate AI ───────────────────────────────
+      final result = await AiLaporanService.generateLaporan(
+        namaKegiatan: kegiatanNama,
+        jabatan: jabatan,
+        unit: unit,
+        tanggal: DateFormat('d MMMM yyyy', 'id_ID').format(_tanggal),
+        hari: _hariLabel,
+        alamat: location?.alamatJalan.isNotEmpty == true
+            ? location!.alamatJalan
+            : (_alamatController.text.trim().isEmpty
+                ? null
+                : _alamatController.text.trim()),
+        kota: location?.kabkota.isNotEmpty == true
+            ? location!.kabkota
+            : (_kabkotaController.text.trim().isEmpty
+                ? null
+                : _kabkotaController.text.trim()),
+      );
+
+      // ── Step 5: Isi semua field form ──────────────────────
+      setState(() {
+        // Uraian kinerja
+        for (final c in _uraianControllers) c.dispose();
+        _uraianControllers = result.uraianKinerja
+            .map((u) => TextEditingController(text: u))
+            .toList();
+        if (_uraianControllers.isEmpty) {
+          _uraianControllers = [TextEditingController()];
+        }
+
+        // Efisiensi
+        _efisiensiRows = result.efisiensi.map((e) {
+          final row = _EHRow();
+          if (_kategoriList.isNotEmpty) {
+            row.kategoriId = _kategoriList.first['KategoriId'] as int?;
+          }
+          row.uraian.text = e.uraian;
+          return row;
+        }).toList();
+
+        // Hambatan
+        _hambatanRows = result.hambatan.map((h) {
+          final row = _EHRow();
+          if (_kategoriList.isNotEmpty) {
+            row.kategoriId = _kategoriList.first['KategoriId'] as int?;
+          }
+          row.uraian.text = h.uraian;
+          return row;
+        }).toList();
+
+        // Link output
+        if (result.linkOutput != null) {
+          _linkOutputController.text = result.linkOutput!;
+        }
+
+        _aiLocationStatus = null;
+      });
+
+      final locMsg = location != null
+          ? ' · Lokasi: ${location.kabkota}'
+          : '';
+      _showSnack('Laporan digenerate AI ✨$locMsg');
+    } catch (e) {
+      setState(() => _aiLocationStatus = null);
+      _showSnack('Gagal generate AI. Coba lagi.', isError: true);
+    } finally {
+      if (mounted) setState(() => _aiGenerating = false);
     }
   }
 
@@ -218,7 +336,7 @@ class _LaporanFormPageState extends State<LaporanFormPage>
   void _showSnack(String msg, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg),
-      backgroundColor: isError ? Colors.red : _teal,
+      backgroundColor: isError ? Colors.red : AppColors.black,
     ));
   }
 
@@ -284,7 +402,7 @@ class _LaporanFormPageState extends State<LaporanFormPage>
         body: _loadingForm
             ? const Center(
                 child: CircularProgressIndicator(
-                    color: _teal, strokeWidth: 2.5),
+                    color: AppColors.black, strokeWidth: 2.5),
               )
             : FadeTransition(
                 opacity: _fadeAnimation,
@@ -293,6 +411,8 @@ class _LaporanFormPageState extends State<LaporanFormPage>
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
                     children: [
+                      _buildAiBanner(),
+                      const SizedBox(height: 10),
                       _buildAbsenBanner(),
                       const SizedBox(height: 12),
                       _buildSection(
@@ -436,14 +556,8 @@ class _LaporanFormPageState extends State<LaporanFormPage>
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppShadows.sm,
       ),
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -456,10 +570,10 @@ class _LaporanFormPageState extends State<LaporanFormPage>
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: _tealLight,
+                    color: AppColors.surfaceMuted,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(icon, color: _teal, size: 16),
+                  child: Icon(icon, color: AppColors.textPrimary, size: 16),
                 ),
                 const SizedBox(width: 10),
                 Text(
@@ -467,17 +581,26 @@ class _LaporanFormPageState extends State<LaporanFormPage>
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
-                    color: _textDark,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 6),
-            Divider(height: 20, color: Colors.grey[100]),
+            const Divider(height: 20, color: AppColors.border),
             ...children,
           ],
         ),
       ),
+    );
+  }
+
+  // ── AI Banner ─────────────────────────────────────────────
+
+  Widget _buildAiBanner() {
+    return _AiBannerWidget(
+      generating: _aiGenerating,
+      locationStatus: _aiLocationStatus,
+      onTap: _aiGenerating ? null : _generateWithAI,
     );
   }
 
@@ -487,9 +610,9 @@ class _LaporanFormPageState extends State<LaporanFormPage>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: _tealLight,
+        color: AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _teal.withOpacity(0.2)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
@@ -497,11 +620,11 @@ class _LaporanFormPageState extends State<LaporanFormPage>
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: _teal.withOpacity(0.12),
+              color: AppColors.border,
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.fingerprint_rounded,
-                color: _teal, size: 18),
+                color: AppColors.textMuted, size: 18),
           ),
           const SizedBox(width: 12),
           const Expanded(
@@ -510,7 +633,7 @@ class _LaporanFormPageState extends State<LaporanFormPage>
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: _textDark,
+                color: AppColors.textPrimary,
               ),
             ),
           ),
@@ -523,19 +646,8 @@ class _LaporanFormPageState extends State<LaporanFormPage>
               padding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [_teal, _tealDark],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: _teal.withOpacity(0.3),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                color: AppColors.black,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
               child: const Text(
                 'Cek Absensi',
@@ -564,7 +676,7 @@ class _LaporanFormPageState extends State<LaporanFormPage>
           lastDate: DateTime.now(),
           builder: (ctx, child) => Theme(
             data: ThemeData.light().copyWith(
-              colorScheme: const ColorScheme.light(primary: _teal),
+              colorScheme: const ColorScheme.light(primary: AppColors.black),
             ),
             child: child!,
           ),
@@ -575,9 +687,9 @@ class _LaporanFormPageState extends State<LaporanFormPage>
         padding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: _bg,
-          border: Border.all(color: Colors.grey.withOpacity(0.2)),
-          borderRadius: BorderRadius.circular(12),
+          color: AppColors.surfaceMuted,
+          border: Border.all(color: AppColors.border),
+          borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
           children: [
@@ -585,11 +697,11 @@ class _LaporanFormPageState extends State<LaporanFormPage>
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: _tealLight,
+                color: AppColors.border,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.calendar_month_rounded,
-                  color: _teal, size: 16),
+                  color: AppColors.textPrimary, size: 16),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -598,12 +710,12 @@ class _LaporanFormPageState extends State<LaporanFormPage>
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: _textDark,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
-            Icon(Icons.arrow_drop_down_rounded,
-                color: Colors.grey[400], size: 22),
+            const Icon(Icons.arrow_drop_down_rounded,
+                color: AppColors.textMuted, size: 22),
           ],
         ),
       ),
@@ -617,9 +729,9 @@ class _LaporanFormPageState extends State<LaporanFormPage>
       padding:
           const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
-        color: _bg,
-        border: Border.all(color: Colors.grey.withOpacity(0.2)),
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.surfaceMuted,
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         children: [
@@ -627,17 +739,17 @@ class _LaporanFormPageState extends State<LaporanFormPage>
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: AppColors.border,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: Colors.grey[400], size: 16),
+            child: Icon(icon, color: AppColors.textMuted, size: 16),
           ),
           const SizedBox(width: 12),
           Text(
             '$label: ',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12,
-              color: Colors.grey[500],
+              color: AppColors.textMuted,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -646,7 +758,7 @@ class _LaporanFormPageState extends State<LaporanFormPage>
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: _textDark,
+              color: AppColors.textPrimary,
             ),
           ),
         ],
@@ -662,30 +774,28 @@ class _LaporanFormPageState extends State<LaporanFormPage>
       isExpanded: true,
       decoration: InputDecoration(
         labelText: 'Jenis Kegiatan *',
-        labelStyle: TextStyle(fontSize: 13, color: Colors.grey[600]),
+        labelStyle: const TextStyle(fontSize: 13, color: AppColors.textMuted),
         prefixIcon:
             const Icon(Icons.work_outline_rounded, size: 20),
         filled: true,
-        fillColor: _bg,
+        fillColor: AppColors.surfaceMuted,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide:
-              BorderSide(color: Colors.grey.withOpacity(0.2)),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide:
-              BorderSide(color: Colors.grey.withOpacity(0.2)),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _teal, width: 1.5),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.black, width: 1.5),
         ),
       ),
-      hint: Text('Pilih kegiatan',
-          style: TextStyle(fontSize: 13, color: Colors.grey[400])),
+      hint: const Text('Pilih kegiatan',
+          style: TextStyle(fontSize: 13, color: AppColors.textMuted)),
       items: _kegiatanList
           .map<DropdownMenuItem<int>>((k) => DropdownMenuItem(
                 value: k['KegiatanId'] as int,
@@ -717,28 +827,26 @@ class _LaporanFormPageState extends State<LaporanFormPage>
               decoration: InputDecoration(
                 labelText: 'Uraian ${index + 1}',
                 labelStyle:
-                    TextStyle(fontSize: 13, color: Colors.grey[600]),
+                    const TextStyle(fontSize: 13, color: AppColors.textMuted),
                 hintText:
                     'Deskripsikan kegiatan yang dikerjakan...',
                 hintStyle:
-                    TextStyle(fontSize: 12, color: Colors.grey[400]),
+                    const TextStyle(fontSize: 12, color: AppColors.textMuted),
                 filled: true,
-                fillColor: _bg,
+                fillColor: AppColors.surfaceMuted,
                 contentPadding: const EdgeInsets.all(14),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                      color: Colors.grey.withOpacity(0.2)),
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                      color: Colors.grey.withOpacity(0.2)),
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                   borderSide:
-                      const BorderSide(color: _teal, width: 1.5),
+                      const BorderSide(color: AppColors.black, width: 1.5),
                 ),
               ),
               validator: index == 0
@@ -797,13 +905,13 @@ class _LaporanFormPageState extends State<LaporanFormPage>
               height: _fotoFile != null ? height : 72,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: _fotoFile != null ? Colors.transparent : _bg,
+                color: _fotoFile != null ? Colors.transparent : AppColors.surfaceMuted,
                 border: Border.all(
                   color: _fotoFile != null
-                      ? _teal
-                      : Colors.grey.withOpacity(0.2),
+                      ? AppColors.black
+                      : AppColors.border,
                 ),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
               ),
               child: _fotoFile != null
                   ? Stack(
@@ -880,15 +988,13 @@ class _LaporanFormPageState extends State<LaporanFormPage>
             padding: const EdgeInsets.symmetric(
                 horizontal: 14, vertical: 14),
             decoration: BoxDecoration(
-              color: _dokumenFile != null
-                  ? _teal.withOpacity(0.05)
-                  : _bg,
+              color: AppColors.surfaceMuted,
               border: Border.all(
                 color: _dokumenFile != null
-                    ? _teal
-                    : Colors.grey.withOpacity(0.2),
+                    ? AppColors.black
+                    : AppColors.border,
               ),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
               children: [
@@ -896,9 +1002,7 @@ class _LaporanFormPageState extends State<LaporanFormPage>
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: _dokumenFile != null
-                        ? _tealLight
-                        : Colors.grey[100],
+                    color: AppColors.border,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -906,8 +1010,8 @@ class _LaporanFormPageState extends State<LaporanFormPage>
                         ? Icons.description_rounded
                         : Icons.upload_file_outlined,
                     color: _dokumenFile != null
-                        ? _teal
-                        : Colors.grey[400],
+                        ? AppColors.textPrimary
+                        : AppColors.textMuted,
                     size: 16,
                   ),
                 ),
@@ -923,8 +1027,8 @@ class _LaporanFormPageState extends State<LaporanFormPage>
                           ? FontWeight.w600
                           : FontWeight.w400,
                       color: _dokumenFile != null
-                          ? _teal
-                          : Colors.grey[400],
+                          ? AppColors.textPrimary
+                          : AppColors.textMuted,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1015,27 +1119,25 @@ class _LaporanFormPageState extends State<LaporanFormPage>
       style: const TextStyle(fontSize: 13, color: _textDark),
       decoration: InputDecoration(
         labelText: required ? '$label *' : label,
-        labelStyle: TextStyle(fontSize: 13, color: Colors.grey[600]),
+        labelStyle: const TextStyle(fontSize: 13, color: AppColors.textMuted),
         hintText: hint,
-        hintStyle: TextStyle(fontSize: 12, color: Colors.grey[400]),
+        hintStyle: const TextStyle(fontSize: 12, color: AppColors.textMuted),
         prefixIcon: Icon(icon, size: 20),
         filled: true,
-        fillColor: _bg,
+        fillColor: AppColors.surfaceMuted,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide:
-              BorderSide(color: Colors.grey.withOpacity(0.2)),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide:
-              BorderSide(color: Colors.grey.withOpacity(0.2)),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _teal, width: 1.5),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.black, width: 1.5),
         ),
       ),
       validator: validator ??
@@ -1076,16 +1178,16 @@ class _LaporanFormPageState extends State<LaporanFormPage>
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide:
-                BorderSide(color: Colors.grey.withOpacity(0.2)),
+                BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide:
-                BorderSide(color: Colors.grey.withOpacity(0.2)),
+                BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: _teal, width: 1.5),
+            borderSide: const BorderSide(color: AppColors.black, width: 1.5),
           ),
         );
 
@@ -1093,10 +1195,9 @@ class _LaporanFormPageState extends State<LaporanFormPage>
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _bg,
+        color: AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(14),
-        border:
-            Border.all(color: Colors.grey.withOpacity(0.15)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1107,7 +1208,7 @@ class _LaporanFormPageState extends State<LaporanFormPage>
                 width: 24,
                 height: 24,
                 decoration: BoxDecoration(
-                  color: _tealLight,
+                  color: AppColors.border,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Center(
@@ -1116,7 +1217,7 @@ class _LaporanFormPageState extends State<LaporanFormPage>
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
-                      color: _teal,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ),
@@ -1127,7 +1228,7 @@ class _LaporanFormPageState extends State<LaporanFormPage>
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: _textDark,
+                  color: AppColors.textPrimary,
                 ),
               ),
               const Spacer(),
@@ -1220,22 +1321,22 @@ class _LaporanFormPageState extends State<LaporanFormPage>
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: _tealLight,
+          color: AppColors.surfaceMuted,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: _teal.withOpacity(0.3)),
+          border: Border.all(color: AppColors.border),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.add_circle_outline_rounded,
-                color: _teal, size: 16),
+                color: AppColors.textPrimary, size: 16),
             const SizedBox(width: 6),
             Text(
               label,
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: _teal,
+                color: AppColors.textPrimary,
               ),
             ),
           ],
@@ -1252,24 +1353,8 @@ class _LaporanFormPageState extends State<LaporanFormPage>
       child: Container(
         height: 52,
         decoration: BoxDecoration(
-          gradient: _submitting
-              ? null
-              : const LinearGradient(
-                  colors: [_teal, _tealDark],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-          color: _submitting ? Colors.grey[300] : null,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: _submitting
-              ? []
-              : [
-                  BoxShadow(
-                    color: _teal.withOpacity(0.35),
-                    blurRadius: 12,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
+          color: _submitting ? Colors.grey[300] : AppColors.black,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1307,4 +1392,316 @@ class _EHRow {
   int? kategoriId;
   int? jenisId;
   final TextEditingController uraian = TextEditingController();
+}
+
+// ── AI Banner Widget ──────────────────────────────────────────
+
+class _AiBannerWidget extends StatefulWidget {
+  final bool generating;
+  final String? locationStatus;
+  final VoidCallback? onTap;
+
+  const _AiBannerWidget({
+    required this.generating,
+    this.locationStatus,
+    this.onTap,
+  });
+
+  @override
+  State<_AiBannerWidget> createState() => _AiBannerWidgetState();
+}
+
+class _AiBannerWidgetState extends State<_AiBannerWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _shimmerCtrl;
+  late Animation<double> _shimmer;
+
+  @override
+  void initState() {
+    super.initState();
+    _shimmerCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    )..repeat(reverse: true);
+    _shimmer = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _shimmerCtrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _shimmerCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PressableScale(
+      onTap: widget.onTap ?? () {},
+      child: AnimatedBuilder(
+        animation: _shimmer,
+        builder: (_, child) {
+          return Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.black,
+                  Color.lerp(
+                    AppColors.black,
+                    const Color(0xFF1A1A2E),
+                    _shimmer.value * 0.4,
+                  )!,
+                ],
+              ),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.22),
+                  blurRadius: 24,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: child,
+          );
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                // AI Icon
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: AppColors.softLime,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: widget.generating
+                      ? const Padding(
+                          padding: EdgeInsets.all(14),
+                          child: CircularProgressIndicator(
+                            color: AppColors.black,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.auto_awesome_rounded,
+                          color: AppColors.black,
+                          size: 26,
+                        ),
+                ),
+                const SizedBox(width: 14),
+                // Text
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'AI Laporan WFA',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.white,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppColors.softLime,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'BETA',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.black,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        child: Text(
+                          key: ValueKey(widget.locationStatus ?? 'idle'),
+                          widget.generating
+                              ? (widget.locationStatus ?? 'Memproses...')
+                              : 'Sekali klik, semua field + alamat terisi',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withOpacity(0.65),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Arrow / loading
+                if (!widget.generating)
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.10),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: AppColors.white,
+                      size: 14,
+                    ),
+                  ),
+              ],
+            ),
+            // Step indicators saat generating
+            if (widget.generating) ...[
+              const SizedBox(height: 14),
+              _buildStepIndicators(),
+            ],
+            // Feature pills saat idle
+            if (!widget.generating) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  _FeaturePill(
+                      icon: Icons.location_on_rounded, label: 'Lokasi GPS'),
+                  const SizedBox(width: 8),
+                  _FeaturePill(
+                      icon: Icons.edit_note_rounded, label: 'Uraian Kinerja'),
+                  const SizedBox(width: 8),
+                  _FeaturePill(
+                      icon: Icons.trending_up_rounded, label: 'Efisiensi'),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStepIndicators() {
+    final steps = [
+      (Icons.location_on_rounded, 'Lokasi'),
+      (Icons.auto_awesome_rounded, 'AI'),
+      (Icons.check_rounded, 'Selesai'),
+    ];
+
+    // Tentukan step aktif berdasarkan status
+    int activeStep = 0;
+    final status = widget.locationStatus ?? '';
+    if (status.contains('Lokasi ditemukan') || status.contains('Mengisi')) {
+      activeStep = 1;
+    } else if (status.contains('Membuat')) {
+      activeStep = 1;
+    }
+
+    return Row(
+      children: steps.asMap().entries.map((entry) {
+        final i = entry.key;
+        final step = entry.value;
+        final isDone = i < activeStep;
+        final isActive = i == activeStep;
+
+        return Expanded(
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: isDone
+                            ? AppColors.softLime
+                            : isActive
+                                ? Colors.white.withOpacity(0.2)
+                                : Colors.white.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        isDone ? Icons.check_rounded : step.$1,
+                        size: 14,
+                        color: isDone
+                            ? AppColors.black
+                            : isActive
+                                ? AppColors.white
+                                : Colors.white.withOpacity(0.35),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      step.$2,
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w600,
+                        color: isActive || isDone
+                            ? Colors.white.withOpacity(0.8)
+                            : Colors.white.withOpacity(0.3),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (i < steps.length - 1)
+                Container(
+                  width: 20,
+                  height: 1,
+                  color: Colors.white.withOpacity(0.15),
+                ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _FeaturePill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _FeaturePill({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white.withOpacity(0.12)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: AppColors.softLime),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
+              color: Colors.white.withOpacity(0.7),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

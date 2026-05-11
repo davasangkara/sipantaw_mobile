@@ -13,10 +13,6 @@ class SkpFormPage extends StatefulWidget {
 }
 
 class _SkpFormPageState extends State<SkpFormPage> {
-  static const _teal = AppColors.teal;
-  static const _tealDark = AppColors.tealDeep;
-  static const _tealLight = AppColors.tealSoft;
-  static const _bg = AppColors.bg;
   static const _textDark = AppColors.textPrimary;
 
   List _kegiatanList = [];
@@ -151,7 +147,7 @@ class _SkpFormPageState extends State<SkpFormPage> {
   void _showSnack(String msg, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg),
-      backgroundColor: isError ? Colors.red : _teal,
+      backgroundColor: isError ? Colors.red : AppColors.black,
     ));
   }
 
@@ -212,7 +208,7 @@ class _SkpFormPageState extends State<SkpFormPage> {
         body: _loadingForm
             ? const Center(
                 child: CircularProgressIndicator(
-                  color: _teal,
+                  color: AppColors.black,
                   strokeWidth: 2.5,
                 ),
               )
@@ -287,7 +283,7 @@ class _SkpFormPageState extends State<SkpFormPage> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 14, vertical: 8),
                                 decoration: BoxDecoration(
-                                  color: _tealLight,
+                                  color: AppColors.surfaceMuted,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
@@ -295,7 +291,7 @@ class _SkpFormPageState extends State<SkpFormPage> {
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w800,
-                                    color: _teal,
+                                    color: AppColors.textPrimary,
                                   ),
                                 ),
                               ),
@@ -305,8 +301,8 @@ class _SkpFormPageState extends State<SkpFormPage> {
                                   min: 1,
                                   max: 100,
                                   divisions: 99,
-                                  activeColor: _teal,
-                                  inactiveColor: _tealLight,
+                                  activeColor: AppColors.black,
+                                  inactiveColor: AppColors.surfaceMuted,
                                   onChanged: (v) => setState(
                                       () => _targetKuantitas = v),
                                 ),
@@ -335,7 +331,7 @@ class _SkpFormPageState extends State<SkpFormPage> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 14, vertical: 8),
                                 decoration: BoxDecoration(
-                                  color: _tealLight,
+                                  color: AppColors.surfaceMuted,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
@@ -343,7 +339,7 @@ class _SkpFormPageState extends State<SkpFormPage> {
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w800,
-                                    color: _teal,
+                                    color: AppColors.textPrimary,
                                   ),
                                 ),
                               ),
@@ -353,8 +349,8 @@ class _SkpFormPageState extends State<SkpFormPage> {
                                   min: 1,
                                   max: 100,
                                   divisions: 99,
-                                  activeColor: _teal,
-                                  inactiveColor: _tealLight,
+                                  activeColor: AppColors.black,
+                                  inactiveColor: AppColors.surfaceMuted,
                                   onChanged: (v) => setState(
                                       () => _targetKualitas = v),
                                 ),
@@ -369,7 +365,7 @@ class _SkpFormPageState extends State<SkpFormPage> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 14, vertical: 8),
                                 decoration: BoxDecoration(
-                                  color: _tealLight,
+                                  color: AppColors.surfaceMuted,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
@@ -377,7 +373,7 @@ class _SkpFormPageState extends State<SkpFormPage> {
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w800,
-                                    color: _teal,
+                                    color: AppColors.textPrimary,
                                   ),
                                 ),
                               ),
@@ -387,8 +383,8 @@ class _SkpFormPageState extends State<SkpFormPage> {
                                   min: 1,
                                   max: 12,
                                   divisions: 11,
-                                  activeColor: _teal,
-                                  inactiveColor: _tealLight,
+                                  activeColor: AppColors.black,
+                                  inactiveColor: AppColors.surfaceMuted,
                                   onChanged: (v) => setState(
                                       () => _targetWaktu = v.toInt()),
                                 ),
@@ -410,10 +406,10 @@ class _SkpFormPageState extends State<SkpFormPage> {
                               padding: const EdgeInsets.symmetric(
                                   vertical: 14),
                               decoration: BoxDecoration(
-                                color: _bg,
-                                borderRadius: BorderRadius.circular(14),
+                                color: AppColors.surfaceMuted,
+                                borderRadius: BorderRadius.circular(AppRadius.pill),
                                 border: Border.all(
-                                  color: _teal.withOpacity(0.4),
+                                  color: AppColors.black,
                                 ),
                               ),
                               child: const Center(
@@ -422,7 +418,7 @@ class _SkpFormPageState extends State<SkpFormPage> {
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,
-                                    color: _teal,
+                                    color: AppColors.black,
                                   ),
                                 ),
                               ),
@@ -439,26 +435,10 @@ class _SkpFormPageState extends State<SkpFormPage> {
                               padding: const EdgeInsets.symmetric(
                                   vertical: 14),
                               decoration: BoxDecoration(
-                                gradient: _submitting
-                                    ? null
-                                    : const LinearGradient(
-                                        colors: [_teal, _tealDark],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      ),
                                 color: _submitting
                                     ? Colors.grey[300]
-                                    : null,
-                                borderRadius: BorderRadius.circular(14),
-                                boxShadow: _submitting
-                                    ? []
-                                    : [
-                                        BoxShadow(
-                                          color: _teal.withOpacity(0.35),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
+                                    : AppColors.black,
+                                borderRadius: BorderRadius.circular(AppRadius.pill),
                               ),
                               child: Center(
                                 child: _submitting
@@ -507,9 +487,9 @@ class _SkpFormPageState extends State<SkpFormPage> {
           padding:
               const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
           decoration: BoxDecoration(
-            color: _bg,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.withOpacity(0.15)),
+            color: AppColors.surfaceMuted,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
           ),
           child: Row(
             children: [
@@ -575,7 +555,7 @@ class _SkpFormPageState extends State<SkpFormPage> {
                         width: 3,
                         height: 16,
                         decoration: BoxDecoration(
-                          color: _teal,
+                          color: AppColors.black,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -603,26 +583,24 @@ class _SkpFormPageState extends State<SkpFormPage> {
                       hintStyle: TextStyle(
                           color: Colors.grey[400], fontSize: 13),
                       prefixIcon: const Icon(Icons.search_rounded,
-                          color: _teal, size: 20),
+                          color: AppColors.black, size: 20),
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 12),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                            color: Colors.grey.withOpacity(0.15)),
+                        borderSide: BorderSide.none,
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                            color: Colors.grey.withOpacity(0.15)),
+                        borderSide: BorderSide.none,
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(
-                            color: _teal, width: 1.5),
+                            color: AppColors.black, width: 1.5),
                       ),
                       filled: true,
-                      fillColor: _bg,
+                      fillColor: AppColors.surfaceMuted,
                     ),
                     onChanged: (val) {
                       setModal(() {
@@ -694,15 +672,15 @@ class _SkpFormPageState extends State<SkpFormPage> {
                                               ? FontWeight.w700
                                               : FontWeight.w400,
                                           color: selected
-                                              ? _teal
-                                              : _textDark,
+                                              ? AppColors.black
+                                              : AppColors.textPrimary,
                                         ),
                                       ),
                                     ),
                                     if (selected)
                                       const Icon(
                                         Icons.check_circle_rounded,
-                                        color: _teal,
+                                        color: AppColors.black,
                                         size: 18,
                                       ),
                                   ],
@@ -726,14 +704,8 @@ class _SkpFormPageState extends State<SkpFormPage> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: AppShadows.sm,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -744,7 +716,7 @@ class _SkpFormPageState extends State<SkpFormPage> {
                   width: 3,
                   height: 14,
                   decoration: BoxDecoration(
-                    color: _teal,
+                    color: AppColors.black,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -754,7 +726,7 @@ class _SkpFormPageState extends State<SkpFormPage> {
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
-                    color: _textDark,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],
@@ -772,29 +744,29 @@ class _SkpFormPageState extends State<SkpFormPage> {
           style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: _textDark,
+            color: AppColors.textPrimary,
           ),
         ),
       );
 
   InputDecoration _inputDeco(String hint) => InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+        hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.withOpacity(0.15)),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.withOpacity(0.15)),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _teal, width: 1.5),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.black, width: 1.5),
         ),
         filled: true,
-        fillColor: _bg,
+        fillColor: AppColors.surfaceMuted,
       );
 }

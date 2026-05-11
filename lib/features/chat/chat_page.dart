@@ -14,10 +14,6 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage>
     with SingleTickerProviderStateMixin {
-  static const _teal = AppColors.teal;
-  static const _tealDark = AppColors.tealDeep;
-  static const _tealLight = AppColors.tealSoft;
-  static const _bg = AppColors.bg;
   static const _textDark = AppColors.textPrimary;
 
   late TabController _tabController;
@@ -204,7 +200,7 @@ class _ChatPageState extends State<ChatPage>
   Widget _buildGroupChat() {
     if (_loadingChat) {
       return const Center(
-        child: CircularProgressIndicator(color: _teal, strokeWidth: 2.5),
+        child: CircularProgressIndicator(color: AppColors.black, strokeWidth: 2.5),
       );
     }
 
@@ -212,7 +208,7 @@ class _ChatPageState extends State<ChatPage>
       children: [
         Expanded(
           child: RefreshIndicator(
-            color: _teal,
+            color: AppColors.black,
             onRefresh: _loadGroupChat,
             child: _messages.isEmpty
                 ? ListView(
@@ -227,13 +223,13 @@ class _ChatPageState extends State<ChatPage>
                                 width: 80,
                                 height: 80,
                                 decoration: const BoxDecoration(
-                                  color: _tealLight,
+                                  color: AppColors.surfaceMuted,
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
                                   Icons.chat_bubble_outline_rounded,
                                   size: 36,
-                                  color: _teal,
+                                  color: AppColors.textMuted,
                                 ),
                               ),
                               const SizedBox(height: 16),
@@ -308,7 +304,7 @@ class _ChatPageState extends State<ChatPage>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: isMine ? _teal : Colors.white,
+                    color: isMine ? AppColors.black : Colors.white,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(14),
                       topRight: const Radius.circular(14),
@@ -317,7 +313,7 @@ class _ChatPageState extends State<ChatPage>
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
+                        color: Colors.black.withValues(alpha: 0.04),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -352,13 +348,13 @@ class _ChatPageState extends State<ChatPage>
 
   Widget _avatar(String nama, {bool mine = false}) => CircleAvatar(
         radius: 16,
-        backgroundColor: mine ? _tealLight : Colors.grey[200],
+        backgroundColor: mine ? AppColors.surfaceMuted : Colors.grey[200],
         child: Text(
           nama.isNotEmpty ? nama[0].toUpperCase() : '?',
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: mine ? _teal : Colors.grey[600],
+            color: mine ? AppColors.textPrimary : Colors.grey[600],
           ),
         ),
       );
@@ -369,7 +365,7 @@ class _ChatPageState extends State<ChatPage>
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 8,
               offset: const Offset(0, -2),
             ),
@@ -388,23 +384,23 @@ class _ChatPageState extends State<ChatPage>
                   decoration: InputDecoration(
                     hintText: 'Tulis pesan...',
                     hintStyle:
-                        TextStyle(color: Colors.grey[400], fontSize: 13),
+                        const TextStyle(color: AppColors.textMuted, fontSize: 13),
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 14, vertical: 10),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(24),
-                      borderSide: BorderSide(color: Colors.grey[200]!),
+                      borderSide: const BorderSide(color: AppColors.border),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(24),
-                      borderSide: BorderSide(color: Colors.grey[200]!),
+                      borderSide: const BorderSide(color: AppColors.border),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(24),
-                      borderSide: const BorderSide(color: _teal),
+                      borderSide: const BorderSide(color: AppColors.black),
                     ),
                     filled: true,
-                    fillColor: _bg,
+                    fillColor: AppColors.surfaceMuted,
                   ),
                   onSubmitted: (_) => _sendMessage(),
                 ),
@@ -415,20 +411,9 @@ class _ChatPageState extends State<ChatPage>
                 child: Container(
                   width: 44,
                   height: 44,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [_teal, _tealDark],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                  decoration: const BoxDecoration(
+                    color: AppColors.black,
                     shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: _teal.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
                   ),
                   child: _sending
                       ? const Padding(
@@ -448,7 +433,7 @@ class _ChatPageState extends State<ChatPage>
   Widget _buildDirectList() {
     if (_loadingPegawai) {
       return const Center(
-        child: CircularProgressIndicator(color: _teal, strokeWidth: 2.5),
+        child: CircularProgressIndicator(color: AppColors.black, strokeWidth: 2.5),
       );
     }
 
@@ -461,13 +446,13 @@ class _ChatPageState extends State<ChatPage>
               width: 80,
               height: 80,
               decoration: const BoxDecoration(
-                color: _tealLight,
+                color: AppColors.surfaceMuted,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.people_outline_rounded,
                 size: 36,
-                color: _teal,
+                color: AppColors.textMuted,
               ),
             ),
             const SizedBox(height: 16),
@@ -490,7 +475,7 @@ class _ChatPageState extends State<ChatPage>
     }
 
     return RefreshIndicator(
-      color: _teal,
+      color: AppColors.black,
       onRefresh: _loadPegawai,
       child: ListView.builder(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
@@ -515,13 +500,7 @@ class _ChatPageState extends State<ChatPage>
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                boxShadow: AppShadows.sm,
               ),
               child: Row(
                 children: [
@@ -529,7 +508,7 @@ class _ChatPageState extends State<ChatPage>
                     width: 46,
                     height: 46,
                     decoration: BoxDecoration(
-                      color: _tealLight,
+                      color: AppColors.surfaceMuted,
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Center(
@@ -538,7 +517,7 @@ class _ChatPageState extends State<ChatPage>
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: _teal,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ),
@@ -553,7 +532,7 @@ class _ChatPageState extends State<ChatPage>
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: _textDark,
+                            color: AppColors.textPrimary,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -561,14 +540,14 @@ class _ChatPageState extends State<ChatPage>
                           const SizedBox(height: 3),
                           Row(
                             children: [
-                              Icon(Icons.work_outline_rounded,
-                                  size: 11, color: Colors.grey[400]),
+                              const Icon(Icons.work_outline_rounded,
+                                  size: 11, color: AppColors.textMuted),
                               const SizedBox(width: 4),
                               Flexible(
                                 child: Text(
                                   jabatan,
-                                  style: TextStyle(
-                                      fontSize: 11, color: Colors.grey[500]),
+                                  style: const TextStyle(
+                                      fontSize: 11, color: AppColors.textMuted),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -582,11 +561,11 @@ class _ChatPageState extends State<ChatPage>
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: _tealLight,
+                      color: AppColors.surfaceMuted,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(Icons.chevron_right_rounded,
-                        color: _teal, size: 18),
+                        color: AppColors.textPrimary, size: 18),
                   ),
                 ],
               ),
