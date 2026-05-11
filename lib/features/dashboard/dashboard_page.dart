@@ -21,9 +21,7 @@ import '../skp/skp_page.dart';
 import 'package:sipantaw_mobile/features/chat/chat_page.dart';
 import '../absensi/absensi_foto_page.dart';
 
-/// Premium monochrome dashboard — black & white, neon pastel accents,
-/// floating pill navbar, large rounded cards, smooth animations.
-/// All business logic / routes preserved.
+
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
@@ -137,28 +135,24 @@ class _DashboardPageState extends State<DashboardPage>
       MediaQuery.of(context).size.width >= _breakpoint;
 
   List<FlSpot> _getChartSpots() {
-    List<num> raw;
+    final List<num>? raw;
     switch (_chartRange) {
       case '1D':
-        raw = _asNumList(_statistik['wfa_per_jam']) ??
-            [0, 1, 0, 1, 1, 0, 1, 1];
+        raw = _asNumList(_statistik['wfa_per_jam']);
         break;
       case '1W':
-        raw = _asNumList(_statistik['wfa_per_hari']) ??
-            [0, 1, 1, 0, 1, 1, 0];
+        raw = _asNumList(_statistik['wfa_per_hari']);
         break;
       case '1M':
-        raw = _asNumList(_statistik['wfa_per_minggu']) ??
-            [3, 5, 4, 6];
+        raw = _asNumList(_statistik['wfa_per_minggu']);
         break;
       case '1Y':
-        raw = _asNumList(_statistik['wfa_per_bulan']) ??
-            List.generate(
-                12, (i) => 8 + (math.sin(i.toDouble()) * 4).abs().round());
+        raw = _asNumList(_statistik['wfa_per_bulan']);
         break;
       default:
-        raw = [];
+        raw = null;
     }
+    if (raw == null || raw.isEmpty) return [];
     return raw
         .asMap()
         .entries
@@ -168,28 +162,44 @@ class _DashboardPageState extends State<DashboardPage>
 
   List<num>? _asNumList(dynamic v) {
     if (v is List && v.isNotEmpty) {
-      return v.map((e) => (e as num)).toList();
+      try {
+        return v.map((e) => (e as num)).toList();
+      } catch (_) {
+        return null;
+      }
     }
     return null;
   }
 
-  List<String> _getChartLabels() {
+  /// Buat label sumbu X sesuai panjang data aktual dari API
+  List<String> _getChartLabelsForSpots(List<FlSpot> spots) {
+    final count = spots.length;
+    if (count == 0) return [];
     switch (_chartRange) {
       case '1D':
-        return ['06', '08', '10', '12', '14', '16', '18', '20'];
+        // Jam kerja: distribusikan label jam sesuai jumlah data
+        final hours = List.generate(count, (i) {
+          final h = 6 + (i * (14 / math.max(count - 1, 1))).round();
+          return '${h.clamp(6, 20).toString().padLeft(2, '0')}';
+        });
+        return hours;
       case '1W':
-        return ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+        const days = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+        return count <= 7 ? days.sublist(0, count) : days;
       case '1M':
-        return ['Mg 1', 'Mg 2', 'Mg 3', 'Mg 4'];
+        return List.generate(count, (i) => 'Mg ${i + 1}');
       case '1Y':
-        return [
+        const months = [
           'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
           'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des',
         ];
+        return count <= 12 ? months.sublist(0, count) : months;
       default:
-        return [];
+        return List.generate(count, (i) => '${i + 1}');
     }
   }
+
+  // _getChartLabels digantikan oleh _getChartLabelsForSpots di atas
 
   @override
   Widget build(BuildContext context) {
@@ -246,141 +256,128 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   // ════════════════════════════════════════════════════════════
-  // BOTTOM NAVIGATION — floating pill with animated active tab
+  // BOTTOM NAVIGATION — iOS tab bar style, glass blur
   // ════════════════════════════════════════════════════════════
   Widget _buildBottomNav() {
     final items = [
-      _NavData(Icons.grid_view_rounded, 'Beranda'),
+      _NavData(Icons.house_rounded, 'Beranda'),
       _NavData(Icons.receipt_long_rounded, 'Laporan'),
-      _NavData(null, 'Buat'), // center FAB
+      _NavData(null, 'Buat'),
       _NavData(Icons.forum_rounded, 'Chat'),
-      _NavData(Icons.person_outline_rounded, 'Profil'),
+      _NavData(Icons.person_rounded, 'Profil'),
     ];
 
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-        child: Container(
-          height: 70,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          decoration: BoxDecoration(
-            color: AppColors.black,
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.26),
-                blurRadius: 30,
-                offset: const Offset(0, 14),
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: Container(
+            height: 68,
+            decoration: BoxDecoration(
+              color: AppColors.black.withOpacity(0.92),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.08),
+                width: 1,
               ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: List.generate(items.length, (i) {
-              final item = items[i];
-              final selected = _bottomNavIndex == i;
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.28),
+                  blurRadius: 32,
+                  offset: const Offset(0, 12),
+                ),
+              ],
+            ),
+            child: Row(
+              children: List.generate(items.length, (i) {
+                final item = items[i];
+                final selected = _bottomNavIndex == i;
 
-              // Center "add" button — signature lime FAB
-              if (i == 2) {
-                return Hero(
-                  tag: 'fab-create',
-                  child: PressableScale(
-                    onTap: () async {
-                      final refresh = await Navigator.push<bool>(
-                        context,
-                        PremiumPageRoute(page: const LaporanFormPage()),
-                      );
-                      if (refresh == true) _loadData();
-                    },
-                    child: Container(
-                      width: 54,
-                      height: 54,
-                      decoration: BoxDecoration(
-                        color: AppColors.softLime,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.softLime.withOpacity(0.55),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
+                // Center FAB
+                if (i == 2) {
+                  return Expanded(
+                    child: Center(
+                      child: Hero(
+                        tag: 'fab-create',
+                        child: PressableScale(
+                          onTap: () async {
+                            final refresh = await Navigator.push<bool>(
+                              context,
+                              PremiumPageRoute(page: const LaporanFormPage()),
+                            );
+                            if (refresh == true) _loadData();
+                          },
+                          child: Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: AppColors.softLime,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.softLime.withOpacity(0.45),
+                                  blurRadius: 18,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(Icons.add_rounded,
+                                color: AppColors.black, size: 26),
                           ),
-                        ],
+                        ),
                       ),
-                      child: const Icon(Icons.add_rounded,
-                          color: AppColors.black, size: 28),
                     ),
-                  ),
-                );
-              }
+                  );
+                }
 
-              return Expanded(
-                child: PressableScale(
-                  onTap: () => _onNavTap(i),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 280),
-                    curve: Curves.easeOutCubic,
-                    height: 46,
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    padding: EdgeInsets.symmetric(
-                        horizontal: selected ? 14 : 6),
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? AppColors.softLime
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                    ),
-                    child: Row(
+                return Expanded(
+                  child: PressableScale(
+                    onTap: () => _onNavTap(i),
+                    child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         AnimatedContainer(
-                          duration: const Duration(milliseconds: 240),
+                          duration: const Duration(milliseconds: 220),
                           curve: Curves.easeOutCubic,
-                          padding: const EdgeInsets.all(2),
+                          width: selected ? 36 : 28,
+                          height: selected ? 36 : 28,
+                          decoration: BoxDecoration(
+                            color: selected
+                                ? AppColors.softLime
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                           child: Icon(
                             item.icon,
-                            size: 20,
+                            size: 18,
                             color: selected
                                 ? AppColors.black
-                                : Colors.white.withOpacity(0.7),
+                                : Colors.white.withOpacity(0.45),
                           ),
                         ),
-                        ClipRect(
-                          child: AnimatedAlign(
-                            alignment: Alignment.centerLeft,
-                            duration: const Duration(milliseconds: 260),
-                            curve: Curves.easeOutCubic,
-                            widthFactor: selected ? 1.0 : 0.0,
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 8),
-                              child: AnimatedOpacity(
-                                duration:
-                                    const Duration(milliseconds: 220),
-                                opacity: selected ? 1 : 0,
-                                curve: Curves.easeOut,
-                                child: Text(
-                                  item.label,
-                                  style: const TextStyle(
-                                    color: AppColors.black,
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.1,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.clip,
-                                  softWrap: false,
-                                ),
-                              ),
-                            ),
+                        const SizedBox(height: 3),
+                        AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 220),
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: selected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: selected
+                                ? AppColors.softLime
+                                : Colors.white.withOpacity(0.40),
+                            letterSpacing: -0.1,
                           ),
+                          child: Text(item.label),
                         ),
                       ],
                     ),
                   ),
-                ),
-              );
-            }),
+                );
+              }),
+            ),
           ),
         ),
       ),
@@ -858,7 +855,7 @@ class _DashboardPageState extends State<DashboardPage>
     );
   }
 
-  // ── Hero header — big editorial black card ──────────────────
+  // ── Hero header — iOS editorial style ──────────────────────
   Widget _buildHeroHeader(String nama) {
     final now = DateTime.now();
     final hour = now.hour;
@@ -876,50 +873,55 @@ class _DashboardPageState extends State<DashboardPage>
         num.tryParse(_statistik['total_hari_WFA']?.toString() ?? '') ?? 0;
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(24, 26, 24, 24),
       decoration: BoxDecoration(
-        color: AppColors.black,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1A1A1A), Color(0xFF0A0A0A)],
+        ),
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
-            blurRadius: 32,
-            offset: const Offset(0, 16),
+            color: Colors.black.withOpacity(0.22),
+            blurRadius: 40,
+            offset: const Offset(0, 20),
           ),
         ],
       ),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Ambient glow
+          // Ambient glow top-right
           Positioned(
-            top: -40,
-            right: -40,
+            top: -50,
+            right: -30,
             child: Container(
-              width: 180,
-              height: 180,
+              width: 200,
+              height: 200,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.softLime.withOpacity(0.28),
+                    AppColors.softLime.withOpacity(0.20),
                     Colors.transparent,
                   ],
                 ),
               ),
             ),
           ),
+          // Ambient glow bottom-left
           Positioned(
-            bottom: -30,
+            bottom: -40,
             left: -20,
             child: Container(
-              width: 120,
-              height: 120,
+              width: 140,
+              height: 140,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.neonCyan.withOpacity(0.18),
+                    AppColors.neonCyan.withOpacity(0.15),
                     Colors.transparent,
                   ],
                 ),
@@ -929,15 +931,19 @@ class _DashboardPageState extends State<DashboardPage>
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Top row — status badge + icon
               Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 5),
+                        horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.10),
-                      borderRadius:
-                          BorderRadius.circular(AppRadius.pill),
+                      color: AppColors.softLime.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      border: Border.all(
+                        color: AppColors.softLime.withOpacity(0.25),
+                        width: 1,
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -950,22 +956,21 @@ class _DashboardPageState extends State<DashboardPage>
                             shape: BoxShape.circle,
                           ),
                         )
-                            .animate(
-                                onPlay: (c) => c.repeat(reverse: true))
+                            .animate(onPlay: (c) => c.repeat(reverse: true))
                             .scale(
-                              begin: const Offset(0.9, 0.9),
-                              end: const Offset(1.4, 1.4),
-                              duration: 900.ms,
+                              begin: const Offset(0.8, 0.8),
+                              end: const Offset(1.5, 1.5),
+                              duration: 1000.ms,
                               curve: Curves.easeInOut,
                             ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 7),
                         const Text(
                           'WFA Aktif',
                           style: TextStyle(
                             color: AppColors.softLime,
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ],
@@ -973,41 +978,54 @@ class _DashboardPageState extends State<DashboardPage>
                   ),
                   const Spacer(),
                   Container(
-                    width: 44,
-                    height: 44,
+                    width: 42,
+                    height: 42,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.08),
+                      color: Colors.white.withOpacity(0.07),
                       borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.08),
+                        width: 1,
+                      ),
                     ),
-                    child: const Icon(Icons.waves_rounded,
-                        color: AppColors.softLime, size: 22),
+                    child: const Icon(Icons.home_work_rounded,
+                        color: AppColors.softLime, size: 20),
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
+              // Greeting
               Text(
-                '$greeting,',
+                greeting,
                 style: TextStyle(
                   fontSize: 13,
-                  color: Colors.white.withOpacity(0.65),
+                  color: Colors.white.withOpacity(0.5),
                   fontWeight: FontWeight.w500,
+                  letterSpacing: 0.2,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
+              // Name — large iOS display style
               Text(
                 nama.split(' ').first,
                 style: const TextStyle(
-                  fontSize: 32,
+                  fontSize: 34,
                   fontWeight: FontWeight.w800,
                   color: AppColors.white,
-                  letterSpacing: -1.2,
-                  height: 1.1,
+                  letterSpacing: -1.5,
+                  height: 1.05,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 22),
-              // Mini metrics pills
+              const SizedBox(height: 24),
+              // Divider
+              Container(
+                height: 1,
+                color: Colors.white.withOpacity(0.08),
+              ),
+              const SizedBox(height: 20),
+              // Metrics row
               Row(
                 children: [
                   Expanded(
@@ -1017,7 +1035,11 @@ class _DashboardPageState extends State<DashboardPage>
                       accent: AppColors.softLime,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  Container(
+                    width: 1,
+                    height: 40,
+                    color: Colors.white.withOpacity(0.10),
+                  ),
                   Expanded(
                     child: _HeroMetric(
                       label: 'Hari WFA',
@@ -1034,15 +1056,22 @@ class _DashboardPageState extends State<DashboardPage>
     );
   }
 
-  // ── Stat cards — pastel accent tiles ────────────────────────
+  // ── Stat cards — iOS horizontal scroll widget row ───────────
   Widget _buildStatCards(double contentWidth) {
-    final isTablet = contentWidth >= 700;
     final wfaTotal = num.tryParse(_statistik['total_hari_WFA'].toString()) ?? 0;
     final laporanTotal =
         num.tryParse(_statistik['total_laporan'].toString()) ?? 0;
     final jamKerja =
         num.tryParse(_statistik['jam_kerja_rata'].toString()) ?? 0;
     final sisaCuti = num.tryParse(_cuti['sisa'].toString()) ?? 0;
+
+    final wfaTrend = _statistik['wfa_trend']?.toString();
+    final laporanTrend = _statistik['laporan_trend']?.toString();
+    final jamKerjaTrend = _statistik['jam_kerja_trend']?.toString();
+    final cutiTrend = _statistik['cuti_trend']?.toString();
+
+    bool isUp(String? t) =>
+        t != null && !t.startsWith('-') && t != '0' && t != '0%';
 
     final stats = [
       _StatData(
@@ -1051,8 +1080,8 @@ class _DashboardPageState extends State<DashboardPage>
         sub: 'Bulan ini',
         icon: Icons.home_work_rounded,
         background: AppColors.neonCyan,
-        trend: '+4.5%',
-        up: true,
+        trend: wfaTrend,
+        up: isUp(wfaTrend),
       ),
       _StatData(
         label: 'Laporan',
@@ -1060,17 +1089,19 @@ class _DashboardPageState extends State<DashboardPage>
         sub: 'Diselesaikan',
         icon: Icons.article_rounded,
         background: AppColors.softLime,
-        trend: '+2.1%',
-        up: true,
+        trend: laporanTrend,
+        up: isUp(laporanTrend),
       ),
       _StatData(
         label: 'Jam Kerja',
-        value: jamKerja == jamKerja.toInt() ? '${jamKerja.toInt()}j' : '${jamKerja}j',
+        value: jamKerja == jamKerja.toInt()
+            ? '${jamKerja.toInt()}j'
+            : '${jamKerja}j',
         sub: 'Rata-rata/hari',
         icon: Icons.timer_rounded,
         background: AppColors.pastelBlue,
-        trend: '-0.8%',
-        up: false,
+        trend: jamKerjaTrend,
+        up: isUp(jamKerjaTrend),
       ),
       _StatData(
         label: 'Sisa Cuti',
@@ -1078,84 +1109,105 @@ class _DashboardPageState extends State<DashboardPage>
         sub: 'Hari tersisa',
         icon: Icons.event_available_rounded,
         background: AppColors.blush,
-        trend: 'Stabil',
-        up: true,
+        trend: cutiTrend,
+        up: isUp(cutiTrend),
       ),
     ];
 
-    return GridView.count(
-      crossAxisCount: isTablet ? 4 : 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 14,
-      mainAxisSpacing: 14,
-      childAspectRatio: isTablet ? 1.1 : 1.0,
-      children: [
-        for (int i = 0; i < stats.length; i++)
-          _StatCard(stat: stats[i])
-              .animate(delay: (80 * i).ms)
-              .fadeIn(duration: 500.ms)
-              .moveY(
-                  begin: 14,
-                  end: 0,
-                  duration: 500.ms,
-                  curve: Curves.easeOutCubic),
-      ],
+    // iOS-style: horizontal scroll row, card width ~160
+    return SizedBox(
+      height: 148,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.zero,
+        itemCount: stats.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (context, i) => _StatCard(stat: stats[i])
+            .animate(delay: (60 * i).ms)
+            .fadeIn(duration: 400.ms)
+            .moveX(begin: 16, end: 0, duration: 400.ms, curve: Curves.easeOutCubic),
+      ),
     );
   }
 
-  // ── Chart card — clean monochrome line with accent fill ─────
+  // ── Chart card — premium line chart dari data API ──────────
   Widget _buildWfaChart() {
     final spots = _getChartSpots();
-    final labels = _getChartLabels();
+    final labels = _getChartLabelsForSpots(spots);
     final ranges = ['1D', '1W', '1M', '1Y'];
 
-    double maxY = spots.fold<double>(0, (prev, s) => s.y > prev ? s.y : prev);
-    maxY = (maxY * 1.4).ceilToDouble();
+    // Summary stats dari data aktual
+    final total = spots.fold<double>(0, (s, e) => s + e.y);
+    final avg = spots.isEmpty ? 0.0 : total / spots.length;
+    final peak = spots.isEmpty
+        ? 0.0
+        : spots.map((s) => s.y).reduce((a, b) => a > b ? a : b);
+
+    double maxY = peak * 1.4;
     if (maxY < 2) maxY = 2;
+    maxY = maxY.ceilToDouble();
+
+    final subtitleMap = {
+      '1D': 'Per jam hari ini',
+      '1W': '7 hari terakhir',
+      '1M': 'Per minggu bulan ini',
+      '1Y': 'Per bulan tahun ini',
+    };
 
     return PremiumCard(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Header ──
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Tren WFA',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                      letterSpacing: -0.4,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Tren WFA',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -0.4,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _chartRange == '1D'
-                        ? 'Status WFA per jam hari ini'
-                        : _chartRange == '1W'
-                            ? '7 hari terakhir'
-                            : _chartRange == '1M'
-                                ? 'Per minggu bulan ini'
-                                : 'Per bulan tahun ini',
-                    style: const TextStyle(
-                      fontSize: 12.5,
-                      color: AppColors.textMuted,
-                      fontWeight: FontWeight.w500,
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitleMap[_chartRange] ?? '',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textMuted,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              // Summary mini pills — hanya tampil jika ada data
+              if (spots.isNotEmpty) ...[
+                _ChartSummaryPill(
+                  label: 'Total',
+                  value: total.toStringAsFixed(0),
+                  accent: AppColors.softLime,
+                ),
+                const SizedBox(width: 8),
+                _ChartSummaryPill(
+                  label: 'Rata',
+                  value: avg.toStringAsFixed(1),
+                  accent: AppColors.neonCyan,
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 18),
-          // Range pills
+
+          // ── Range pills ──
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
@@ -1174,8 +1226,7 @@ class _DashboardPageState extends State<DashboardPage>
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
                         color: active ? AppColors.black : Colors.transparent,
-                        borderRadius:
-                            BorderRadius.circular(AppRadius.pill),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                       child: Center(
                         child: Text(
@@ -1197,14 +1248,38 @@ class _DashboardPageState extends State<DashboardPage>
             ),
           ),
           const SizedBox(height: 22),
+
+          // ── Chart area ──
           SizedBox(
-            height: 180,
+            height: 190,
             child: spots.isEmpty
-                ? const Center(
-                    child: Text(
-                      'Tidak ada data',
-                      style: TextStyle(
-                          color: AppColors.textMuted, fontSize: 12),
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceMuted,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Icon(
+                            Icons.bar_chart_rounded,
+                            color: AppColors.textMuted,
+                            size: 26,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Belum ada data untuk periode ini',
+                          style: TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   )
                 : LineChart(
@@ -1215,14 +1290,32 @@ class _DashboardPageState extends State<DashboardPage>
                         horizontalInterval:
                             (maxY / 4).clamp(0.5, double.infinity),
                         getDrawingHorizontalLine: (_) => FlLine(
-                          color: AppColors.border.withOpacity(0.7),
+                          color: AppColors.border.withOpacity(0.5),
                           strokeWidth: 1,
-                          dashArray: const [4, 6],
+                          dashArray: const [4, 8],
                         ),
                       ),
                       titlesData: FlTitlesData(
-                        leftTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false)),
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 32,
+                            interval: (maxY / 4).clamp(0.5, double.infinity),
+                            getTitlesWidget: (value, meta) {
+                              if (value == 0 || value == maxY) {
+                                return const SizedBox.shrink();
+                              }
+                              return Text(
+                                value.toInt().toString(),
+                                style: const TextStyle(
+                                  fontSize: 9.5,
+                                  color: AppColors.textMuted,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                         rightTitles: const AxisTitles(
                             sideTitles: SideTitles(showTitles: false)),
                         topTitles: const AxisTitles(
@@ -1237,6 +1330,7 @@ class _DashboardPageState extends State<DashboardPage>
                               if (i < 0 || i >= labels.length) {
                                 return const SizedBox.shrink();
                               }
+                              // Skip label agar tidak tumpuk
                               final skip = labels.length > 8 ? 2 : 1;
                               if (i % skip != 0) {
                                 return const SizedBox.shrink();
@@ -1258,34 +1352,55 @@ class _DashboardPageState extends State<DashboardPage>
                       ),
                       borderData: FlBorderData(show: false),
                       lineTouchData: LineTouchData(
+                        handleBuiltInTouches: true,
                         touchTooltipData: LineTouchTooltipData(
                           getTooltipColor: (_) => AppColors.black,
-                          tooltipRoundedRadius: 10,
-                          getTooltipItems: (touched) => touched
-                              .map((s) => LineTooltipItem(
-                                    s.y.toStringAsFixed(0),
-                                    const TextStyle(
-                                      color: AppColors.softLime,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w800,
+                          tooltipRoundedRadius: 12,
+                          tooltipPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          getTooltipItems: (touched) => touched.map((s) {
+                            final label = s.x.toInt() < labels.length
+                                ? labels[s.x.toInt()]
+                                : '';
+                            return LineTooltipItem(
+                              '${s.y.toStringAsFixed(0)}',
+                              const TextStyle(
+                                color: AppColors.softLime,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                              ),
+                              children: [
+                                if (label.isNotEmpty)
+                                  TextSpan(
+                                    text: '\n$label',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.55),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
                                     ),
-                                  ))
-                              .toList(),
+                                  ),
+                              ],
+                            );
+                          }).toList(),
                         ),
                       ),
                       lineBarsData: [
                         LineChartBarData(
                           spots: spots,
                           isCurved: true,
-                          curveSmoothness: 0.38,
+                          curveSmoothness: 0.35,
                           color: AppColors.black,
-                          barWidth: 2.8,
+                          barWidth: 3,
+                          shadow: Shadow(
+                            color: Colors.black.withOpacity(0.12),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
                           dotData: FlDotData(
-                            show: true,
-                            getDotPainter:
-                                (spot, percent, bar, index) =>
-                                    FlDotCirclePainter(
-                              radius: 4,
+                            show: spots.length <= 14,
+                            getDotPainter: (spot, percent, bar, index) =>
+                                FlDotCirclePainter(
+                              radius: 4.5,
                               color: AppColors.softLime,
                               strokeWidth: 2.5,
                               strokeColor: AppColors.black,
@@ -1296,9 +1411,10 @@ class _DashboardPageState extends State<DashboardPage>
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
+                              stops: const [0.0, 0.5, 1.0],
                               colors: [
-                                AppColors.neonCyan.withOpacity(0.45),
-                                AppColors.neonCyan.withOpacity(0.05),
+                                AppColors.softLime.withOpacity(0.22),
+                                AppColors.neonCyan.withOpacity(0.10),
                                 Colors.transparent,
                               ],
                             ),
@@ -1308,16 +1424,44 @@ class _DashboardPageState extends State<DashboardPage>
                       minY: 0,
                       maxY: maxY,
                     ),
-                    duration: const Duration(milliseconds: 400),
+                    duration: const Duration(milliseconds: 450),
                     curve: Curves.easeInOutCubic,
                   ),
           ),
+
+          // ── Peak info — hanya jika ada data ──
+          if (spots.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceMuted,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.insights_rounded,
+                      size: 15, color: AppColors.textMuted),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Puncak: ${peak.toStringAsFixed(0)} · Rata-rata: ${avg.toStringAsFixed(1)} · Total: ${total.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textMuted,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  // ── Status absensi ──────────────────────────────────────────
+  // ── Status absensi — iOS Health style ──────────────────────
   Widget _buildStatusAbsensiCard() {
     final isHariKerja = _statusAbsensi['hari_kerja'] ?? true;
     final items = [
@@ -1347,63 +1491,111 @@ class _DashboardPageState extends State<DashboardPage>
       ),
     ];
     final doneCount = items.where((e) => e.done).length;
+    final progress = doneCount / items.length;
 
     return PremiumCard(
       padding: const EdgeInsets.all(22),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Status Hari Ini',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                  letterSpacing: -0.3,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Status Hari Ini',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '$doneCount dari ${items.length} selesai',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textMuted,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
-              AccentChip(
-                label: '$doneCount / ${items.length}',
-                color: AppColors.softLime,
+              // Circular progress indicator iOS style
+              SizedBox(
+                width: 44,
+                height: 44,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 44,
+                      height: 44,
+                      child: CircularProgressIndicator(
+                        value: progress,
+                        strokeWidth: 4,
+                        backgroundColor: AppColors.surfaceMuted,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          doneCount == items.length
+                              ? AppColors.softLime
+                              : AppColors.black,
+                        ),
+                        strokeCap: StrokeCap.round,
+                      ),
+                    ),
+                    Text(
+                      '$doneCount',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                        height: 1,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 20),
           if (!isHariKerja)
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
               decoration: BoxDecoration(
                 color: AppColors.surfaceMuted,
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
-              child: const Center(
-                child: Text(
-                  'Hari ini bukan hari kerja',
-                  style: TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+              child: Row(
+                children: [
+                  const Icon(Icons.weekend_rounded,
+                      color: AppColors.textMuted, size: 18),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'Hari ini bukan hari kerja',
+                    style: TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
+                ],
               ),
             )
           else
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+            Column(
               children: items.asMap().entries.map((entry) {
-                return _AbsenBadge(item: entry.value)
-                    .animate(delay: (60 * entry.key).ms)
-                    .fadeIn(duration: 380.ms)
-                    .scale(
-                      begin: const Offset(0.8, 0.8),
-                      end: const Offset(1, 1),
-                      duration: 380.ms,
-                      curve: Curves.easeOutCubic,
-                    );
+                final i = entry.key;
+                final item = entry.value;
+                return _AbsenRow(item: item)
+                    .animate(delay: (50 * i).ms)
+                    .fadeIn(duration: 350.ms)
+                    .moveX(begin: 8, end: 0, duration: 350.ms,
+                        curve: Curves.easeOutCubic);
               }).toList(),
             ),
         ],
@@ -1411,7 +1603,7 @@ class _DashboardPageState extends State<DashboardPage>
     );
   }
 
-  // ── Menu grid (mobile) ──────────────────────────────────────
+  // ── Menu grid — iOS app icon style ─────────────────────────
   Widget _buildMenuGrid() {
     final menus = _menuItems();
 
@@ -1419,55 +1611,49 @@ class _DashboardPageState extends State<DashboardPage>
       crossAxisCount: 4,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 0.82,
+      crossAxisSpacing: 8,
+      mainAxisSpacing: 16,
+      childAspectRatio: 0.78,
       children: List.generate(menus.length, (i) {
         final m = menus[i];
         return PressableScale(
           onTap: () => _handleMenuTap(m, i),
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              boxShadow: AppShadows.xs,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: m.accent,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(m.icon, color: AppColors.black, size: 22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: m.accent,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: AppShadows.tinted(m.accent, opacity: 0.20),
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  m.label,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                    letterSpacing: 0.1,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                child: Icon(m.icon, color: AppColors.black, size: 24),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                m.label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                  letterSpacing: -0.1,
                 ),
-              ],
-            ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
         )
-            .animate(delay: (50 * i).ms)
-            .fadeIn(duration: 400.ms)
-            .moveY(
-                begin: 10,
-                end: 0,
-                duration: 400.ms,
-                curve: Curves.easeOutCubic);
+            .animate(delay: (40 * i).ms)
+            .fadeIn(duration: 350.ms)
+            .scale(
+                begin: const Offset(0.85, 0.85),
+                end: const Offset(1, 1),
+                duration: 350.ms,
+                curve: Curves.easeOutBack);
       }),
     );
   }
@@ -1781,80 +1967,109 @@ class _DashboardPageState extends State<DashboardPage>
     );
   }
 
-  // ── Laporan terbaru ─────────────────────────────────────────
+  // ── Laporan terbaru — iOS list style ───────────────────────
   Widget _buildLaporanTerbaru() {
-    return PremiumCard(
-      padding: EdgeInsets.zero,
-      child: Column(
-        children: _laporanTerbaru.asMap().entries.map((entry) {
-          final i = entry.key;
-          final l = entry.value as Map;
-          final isLast = i == _laporanTerbaru.length - 1;
-          final status = l['status']?.toString() ?? '-';
-          final statusMap = <String, Color>{
-            'Disetujui': AppColors.softLime,
-            'Ditolak': AppColors.blush,
-            'Pending': AppColors.neonCyan,
-          };
-          final chipColor = statusMap[status] ?? AppColors.surfaceMuted;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: AppShadows.sm,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: Column(
+          children: _laporanTerbaru.asMap().entries.map((entry) {
+            final i = entry.key;
+            final l = entry.value as Map;
+            final isLast = i == _laporanTerbaru.length - 1;
+            final status = l['status']?.toString() ?? '-';
+            final statusMap = <String, Color>{
+              'Disetujui': AppColors.softLime,
+              'Ditolak': AppColors.blush,
+              'Pending': AppColors.neonCyan,
+            };
+            final chipColor = statusMap[status] ?? AppColors.surfaceMuted;
+            final dotColor = statusMap[status] ?? AppColors.textMuted;
 
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 16),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceMuted,
-                        borderRadius: BorderRadius.circular(14),
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 18, vertical: 14),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: chipColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(Icons.article_rounded,
+                            color: dotColor == AppColors.textMuted
+                                ? AppColors.textMuted
+                                : AppColors.black,
+                            size: 20),
                       ),
-                      child: const Icon(Icons.article_rounded,
-                          color: AppColors.black, size: 22),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l['kegiatan']?.toString() ?? '-',
-                            style: const TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l['kegiatan']?.toString() ?? '-',
+                              style: const TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                                letterSpacing: -0.1,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            l['tanggal']?.toString() ?? '-',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: AppColors.textMuted,
-                              fontWeight: FontWeight.w500,
+                            const SizedBox(height: 2),
+                            Text(
+                              l['tanggal']?.toString() ?? '-',
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                color: AppColors.textMuted,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    AccentChip(label: status, color: chipColor),
-                  ],
+                      const SizedBox(width: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: chipColor,
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                        child: Text(
+                          status,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.black,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              if (!isLast)
-                Divider(
+                if (!isLast)
+                  Divider(
                     height: 1,
-                    indent: 20,
-                    endIndent: 20,
-                    color: AppColors.border.withOpacity(0.7)),
-            ],
-          );
-        }).toList(),
+                    indent: 76,
+                    endIndent: 18,
+                    color: AppColors.border,
+                  ),
+              ],
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -1899,59 +2114,30 @@ class _HeroMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.06),
-          width: 1,
-        ),
-      ),
-      child: Row(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 26,
               color: accent,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: accent.withOpacity(0.7),
-                  blurRadius: 8,
-                ),
-              ],
+              fontWeight: FontWeight.w800,
+              letterSpacing: -1,
+              height: 1,
             ),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    color: Colors.white.withOpacity(0.65),
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    color: AppColors.white,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.3,
-                    height: 1,
-                  ),
-                ),
-              ],
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11.5,
+              color: Colors.white.withOpacity(0.55),
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
             ),
           ),
         ],
@@ -1961,7 +2147,8 @@ class _HeroMetric extends StatelessWidget {
 }
 
 class _StatData {
-  final String label, value, sub, trend;
+  final String label, value, sub;
+  final String? trend; // null = tidak ada data trend dari API
   final IconData icon;
   final Color background;
   final bool up;
@@ -1972,7 +2159,7 @@ class _StatData {
     required this.sub,
     required this.icon,
     required this.background,
-    required this.trend,
+    this.trend,
     required this.up,
   });
 }
@@ -1990,70 +2177,38 @@ class _StatCardState extends State<_StatCard> {
 
   @override
   Widget build(BuildContext context) {
+    final s = widget.stat;
     return MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 260),
+        duration: const Duration(milliseconds: 240),
         curve: Curves.easeOutCubic,
-        transform: Matrix4.translationValues(0, _hover ? -4 : 0, 0),
+        width: 148,
+        transform: Matrix4.translationValues(0, _hover ? -3 : 0, 0),
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: widget.stat.background,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          boxShadow: _hover ? AppShadows.md : AppShadows.xs,
+          color: s.background,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: _hover
+              ? AppShadows.tinted(s.background, opacity: 0.30)
+              : AppShadows.tinted(s.background, opacity: 0.14),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.88),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(
-                    widget.stat.icon,
-                    color: widget.stat.background,
-                    size: 20,
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        widget.stat.up
-                            ? Icons.trending_up_rounded
-                            : Icons.trending_down_rounded,
-                        size: 11,
-                        color: AppColors.black,
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        widget.stat.trend,
-                        style: const TextStyle(
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.black,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            // Icon
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.10),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(s.icon, color: AppColors.black, size: 19),
             ),
+            // Value + label
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -2061,34 +2216,76 @@ class _StatCardState extends State<_StatCard> {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    widget.stat.value,
+                    s.value,
                     style: const TextStyle(
-                      fontSize: 30,
+                      fontSize: 28,
                       fontWeight: FontWeight.w800,
                       color: AppColors.black,
-                      letterSpacing: -1,
+                      letterSpacing: -1.2,
                       height: 1,
                     ),
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Text(
-                  widget.stat.label,
+                  s.label,
                   style: const TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.black,
+                    letterSpacing: -0.1,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                Text(
-                  widget.stat.sub,
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    color: Colors.black.withOpacity(0.55),
-                    fontWeight: FontWeight.w600,
-                  ),
+                const SizedBox(height: 1),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        s.sub,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.black.withOpacity(0.50),
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (s.trend != null) ...[
+                      const SizedBox(width: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.10),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              s.up
+                                  ? Icons.arrow_upward_rounded
+                                  : Icons.arrow_downward_rounded,
+                              size: 9,
+                              color: AppColors.black,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              s.trend!,
+                              style: const TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.black,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),
@@ -2113,55 +2310,71 @@ class _AbsenItem {
   });
 }
 
-class _AbsenBadge extends StatelessWidget {
+/// iOS Settings-style row untuk status absensi
+class _AbsenRow extends StatelessWidget {
   final _AbsenItem item;
-  const _AbsenBadge({required this.item});
+  const _AbsenRow({required this.item});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 360),
-          curve: Curves.easeOutCubic,
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            color: item.done ? AppColors.black : item.color,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: item.done
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.18),
-                      blurRadius: 14,
-                      offset: const Offset(0, 6),
-                    ),
-                  ]
-                : null,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          // Icon container
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: item.done ? item.color : AppColors.surfaceMuted,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              item.done ? Icons.check_rounded : item.icon,
+              color: item.done ? AppColors.black : AppColors.textMuted,
+              size: 20,
+            ),
           ),
-          child: Icon(
-            item.done ? Icons.check_rounded : item.icon,
-            color: item.done ? item.color : AppColors.black,
-            size: 26,
+          const SizedBox(width: 14),
+          // Label
+          Expanded(
+            child: Text(
+              item.label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: item.done
+                    ? AppColors.textPrimary
+                    : AppColors.textMuted,
+              ),
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          item.label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-            color: item.done
-                ? AppColors.textPrimary
-                : AppColors.textMuted,
-            letterSpacing: 0.3,
+          // Status badge
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: item.done ? item.color : AppColors.surfaceMuted,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+            ),
+            child: Text(
+              item.done ? 'Selesai' : 'Belum',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: item.done ? AppColors.black : AppColors.textMuted,
+              ),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
+
+/// (removed — replaced by _AbsenRow)
 
 class _AvatarWidget extends StatelessWidget {
   final String name;
@@ -2657,6 +2870,57 @@ class _NotifSheet extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// CHART SUMMARY PILL — mini stat badge di header chart
+// ══════════════════════════════════════════════════════════════
+class _ChartSummaryPill extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color accent;
+
+  const _ChartSummaryPill({
+    required this.label,
+    required this.value,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: accent.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: accent.withOpacity(0.25), width: 1),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+              letterSpacing: -0.3,
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textMuted,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
       ),
     );
   }

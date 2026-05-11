@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_config.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/premium_widgets.dart';
 import 'chat_direct_page.dart';
 
 class ChatPage extends StatefulWidget {
@@ -115,63 +116,75 @@ class _ChatPageState extends State<ChatPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: AppColors.canvas,
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
           SliverAppBar(
             pinned: true,
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.canvas,
             elevation: 0,
-            surfaceTintColor: Colors.white,
-            iconTheme: const IconThemeData(color: _textDark),
-            toolbarHeight: 64,
+            surfaceTintColor: Colors.transparent,
+            toolbarHeight: 72,
+            titleSpacing: 20,
+            leading: Padding(
+              padding: const EdgeInsets.all(14),
+              child: PressableScale(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: AppShadows.xs,
+                  ),
+                  child: const Icon(Icons.arrow_back_ios_new_rounded,
+                      size: 16, color: AppColors.textPrimary),
+                ),
+              ),
+            ),
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   _tabController.index == 0 ? _roomNama : 'Percakapan',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[500],
-                    fontWeight: FontWeight.w400,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.3,
                   ),
                 ),
                 Text(
                   _tabController.index == 0 ? 'Grup Unit' : 'Pesan Langsung',
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: _textDark,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.4,
                   ),
                 ),
               ],
             ),
             bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(49),
-              child: Column(
-                children: [
-                  Container(height: 1, color: Colors.grey.withOpacity(0.08)),
-                  TabBar(
-                    controller: _tabController,
-                    indicatorColor: _teal,
-                    indicatorWeight: 2.5,
-                    labelColor: _teal,
-                    unselectedLabelColor: Colors.grey[400],
-                    labelStyle: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    unselectedLabelStyle: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    onTap: (_) => setState(() {}),
-                    tabs: const [
-                      Tab(icon: Icon(Icons.group_rounded, size: 18), text: 'Grup Unit'),
-                      Tab(icon: Icon(Icons.person_rounded, size: 18), text: 'Langsung'),
-                    ],
-                  ),
+              preferredSize: const Size.fromHeight(48),
+              child: TabBar(
+                controller: _tabController,
+                indicatorColor: AppColors.black,
+                indicatorWeight: 2.5,
+                labelColor: AppColors.black,
+                unselectedLabelColor: AppColors.textMuted,
+                labelStyle: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+                unselectedLabelStyle: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+                onTap: (_) => setState(() {}),
+                tabs: const [
+                  Tab(icon: Icon(Icons.group_rounded, size: 18), text: 'Grup Unit'),
+                  Tab(icon: Icon(Icons.person_rounded, size: 18), text: 'Langsung'),
                 ],
               ),
             ),

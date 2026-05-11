@@ -290,15 +290,53 @@ class _AbsensiPageState extends State<AbsensiPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: AppColors.canvas,
       appBar: AppBar(
-        title: const Text(
-          'Absensi',
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 17,
-            letterSpacing: -0.2,
+        backgroundColor: AppColors.canvas,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: AppShadows.xs,
+              ),
+              child: const Icon(Icons.arrow_back_ios_new_rounded,
+                  size: 16, color: AppColors.textPrimary),
+            ),
           ),
+        ),
+        leadingWidth: 64,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Text(
+              'Kehadiran',
+              style: TextStyle(
+                fontSize: 11.5,
+                color: AppColors.textMuted,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.3,
+              ),
+            ),
+            Text(
+              'Absensi',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+                letterSpacing: -0.4,
+              ),
+            ),
+          ],
         ),
       ),
       body: RefreshIndicator(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_config.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/premium_widgets.dart';
 import '../riwayat/riwayat_detail_page.dart';
 
 class RiwayatPage extends StatefulWidget {
@@ -303,87 +304,102 @@ class _RiwayatPageState extends State<RiwayatPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: AppColors.canvas,
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
           SliverAppBar(
             pinned: true,
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.canvas,
             elevation: 0,
-            surfaceTintColor: Colors.white,
-            iconTheme: const IconThemeData(color: _textDark),
-            toolbarHeight: 64,
-            title: Column(
+            surfaceTintColor: Colors.transparent,
+            toolbarHeight: 72,
+            titleSpacing: 20,
+            leading: Padding(
+              padding: const EdgeInsets.all(14),
+              child: PressableScale(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: AppShadows.xs,
+                  ),
+                  child: const Icon(Icons.arrow_back_ios_new_rounded,
+                      size: 16, color: AppColors.textPrimary),
+                ),
+              ),
+            ),
+            title: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   'Riwayat',
                   style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[500],
-                    fontWeight: FontWeight.w400,
+                    fontSize: 11.5,
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.3,
                   ),
                 ),
-                const Text(
+                Text(
                   'Laporan Saya',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: _textDark,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.4,
                   ),
                 ),
               ],
             ),
             actions: [
-              GestureDetector(
-                onTap: _showFilter,
-                child: Container(
-                  margin: const EdgeInsets.only(right: 16),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: _hasFilter ? _tealLight : _bg,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.tune_rounded,
-                        size: 16,
-                        color: _hasFilter ? _teal : Colors.grey[400],
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        'Filter',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: _hasFilter ? _teal : Colors.grey[400],
+              Padding(
+                padding: const EdgeInsets.only(right: 20, top: 14, bottom: 14),
+                child: GestureDetector(
+                  onTap: _showFilter,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: _hasFilter ? AppColors.surfaceMuted : AppColors.white,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      boxShadow: AppShadows.xs,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.tune_rounded,
+                          size: 15,
+                          color: _hasFilter ? AppColors.textPrimary : AppColors.textMuted,
                         ),
-                      ),
-                      if (_hasFilter) ...[
-                        const SizedBox(width: 4),
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: const BoxDecoration(
-                            color: _teal,
-                            shape: BoxShape.circle,
+                        const SizedBox(width: 5),
+                        Text(
+                          'Filter',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: _hasFilter ? AppColors.textPrimary : AppColors.textMuted,
                           ),
                         ),
+                        if (_hasFilter) ...[
+                          const SizedBox(width: 4),
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: AppColors.textPrimary,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),
             ],
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(1),
-              child:
-                  Container(height: 1, color: Colors.grey.withOpacity(0.08)),
-            ),
           ),
         ],
         body: _loading

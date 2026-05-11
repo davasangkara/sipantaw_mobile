@@ -166,27 +166,73 @@ class _AbsensiFotoPageState extends State<AbsensiFotoPage> {
   @override
   Widget build(BuildContext context) {
     final jamSekarang = DateFormat('HH.mm').format(_now);
-    final timezone = 'WIB (UTC+7)';
+    const timezone = 'WIB (UTC+7)';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
+      backgroundColor: AppColors.canvas,
       appBar: AppBar(
-        backgroundColor: _teal,
-        foregroundColor: Colors.white,
-        title: const Text('Absensi & Geolocation',
-            style: TextStyle(fontWeight: FontWeight.w700)),
+        backgroundColor: AppColors.canvas,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: AppShadows.xs,
+              ),
+              child: const Icon(Icons.arrow_back_ios_new_rounded,
+                  size: 16, color: AppColors.textPrimary),
+            ),
+          ),
+        ),
+        leadingWidth: 64,
+        title: const Text(
+          'Absensi WFA',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+            letterSpacing: -0.3,
+          ),
+        ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
+          Container(
+            margin: const EdgeInsets.only(right: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: AppShadows.xs,
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(jamSekarang,
-                    style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w700)),
-                Text(timezone, style: const TextStyle(fontSize: 10)),
+                Text(
+                  jamSekarang,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const Text(
+                  timezone,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ],
             ),
           ),

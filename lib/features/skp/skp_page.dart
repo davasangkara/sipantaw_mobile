@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_config.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/premium_widgets.dart';
 import 'skp_form_page.dart';
 import 'skp_detail_page.dart';
 
@@ -131,106 +132,121 @@ class _SkpPageState extends State<SkpPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: AppColors.canvas,
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
           SliverAppBar(
             pinned: true,
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.canvas,
             elevation: 0,
-            surfaceTintColor: Colors.white,
-            iconTheme: const IconThemeData(color: _textDark),
-            toolbarHeight: 64,
-            title: Column(
+            surfaceTintColor: Colors.transparent,
+            toolbarHeight: 72,
+            titleSpacing: 20,
+            leading: Padding(
+              padding: const EdgeInsets.all(14),
+              child: PressableScale(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: AppShadows.xs,
+                  ),
+                  child: const Icon(Icons.arrow_back_ios_new_rounded,
+                      size: 16, color: AppColors.textPrimary),
+                ),
+              ),
+            ),
+            title: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   'Kinerja Pegawai',
                   style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[500],
-                    fontWeight: FontWeight.w400,
+                    fontSize: 11.5,
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.3,
                   ),
                 ),
-                const Text(
+                Text(
                   'SKP Target',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: _textDark,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.4,
                   ),
                 ),
               ],
             ),
             actions: [
-              GestureDetector(
-                onTap: _showFilter,
-                child: Container(
-                  margin: const EdgeInsets.only(right: 8),
-                  padding: const EdgeInsets.all(9),
-                  decoration: BoxDecoration(
-                    color: _hasActiveFilter ? _tealLight : _bg,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    Icons.filter_list_rounded,
-                    size: 20,
-                    color: _hasActiveFilter ? _teal : Colors.grey[500],
+              Padding(
+                padding: const EdgeInsets.only(top: 14, bottom: 14),
+                child: GestureDetector(
+                  onTap: _showFilter,
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: _hasActiveFilter ? AppColors.surfaceMuted : AppColors.white,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      boxShadow: AppShadows.xs,
+                    ),
+                    child: Icon(
+                      Icons.filter_list_rounded,
+                      size: 18,
+                      color: _hasActiveFilter ? AppColors.textPrimary : AppColors.textMuted,
+                    ),
                   ),
                 ),
               ),
-              GestureDetector(
-                onTap: () async {
-                  final refresh = await Navigator.push<bool>(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const SkpFormPage()),
-                  );
-                  if (refresh == true) _loadData();
-                },
-                child: Container(
-                  margin: const EdgeInsets.only(right: 16),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [_teal, _tealDark],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: _teal.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(Icons.add_rounded, size: 16, color: Colors.white),
-                      SizedBox(width: 5),
-                      Text(
-                        'Buat SKP',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
+              Padding(
+                padding: const EdgeInsets.only(right: 20, top: 14, bottom: 14),
+                child: PressableScale(
+                  onTap: () async {
+                    final refresh = await Navigator.push<bool>(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const SkpFormPage()),
+                    );
+                    if (refresh == true) _loadData();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.black,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add_rounded, size: 16, color: AppColors.softLime),
+                        SizedBox(width: 6),
+                        Text(
+                          'Buat SKP',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.white,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ],
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(1),
-              child: Container(
-                  height: 1, color: Colors.grey.withOpacity(0.08)),
-            ),
           ),
         ],
         body: _loading

@@ -8,6 +8,7 @@ import '../../core/api/api_client.dart';
 import '../../core/api/api_config.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/premium_widgets.dart';
 import '../absensi/absensi_foto_page.dart';
 
 class LaporanFormPage extends StatefulWidget {
@@ -229,42 +230,54 @@ class _LaporanFormPageState extends State<LaporanFormPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: AppColors.canvas,
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
           SliverAppBar(
             pinned: true,
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.canvas,
             elevation: 0,
-            surfaceTintColor: Colors.white,
-            iconTheme: const IconThemeData(color: _textDark),
-            toolbarHeight: 64,
-            title: Column(
+            surfaceTintColor: Colors.transparent,
+            toolbarHeight: 72,
+            titleSpacing: 20,
+            leading: Padding(
+              padding: const EdgeInsets.all(14),
+              child: PressableScale(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: AppShadows.xs,
+                  ),
+                  child: const Icon(Icons.arrow_back_ios_new_rounded,
+                      size: 16, color: AppColors.textPrimary),
+                ),
+              ),
+            ),
+            title: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   'Kinerja Pegawai',
                   style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[500],
-                    fontWeight: FontWeight.w400,
+                    fontSize: 11.5,
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.3,
                   ),
                 ),
-                const Text(
+                Text(
                   'Form Laporan WFA',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: _textDark,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.4,
                   ),
                 ),
               ],
-            ),
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(1),
-              child: Container(
-                  height: 1, color: Colors.grey.withOpacity(0.08)),
             ),
           ),
         ],

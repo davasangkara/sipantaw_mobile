@@ -98,12 +98,30 @@ class _ChatDirectPageState extends State<ChatDirectPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: AppColors.canvas,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.canvas,
         elevation: 0,
-        surfaceTintColor: Colors.white,
-        iconTheme: const IconThemeData(color: _textDark),
+        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: AppShadows.xs,
+              ),
+              child: const Icon(Icons.arrow_back_ios_new_rounded,
+                  size: 16, color: AppColors.textPrimary),
+            ),
+          ),
+        ),
+        leadingWidth: 64,
         titleSpacing: 0,
         title: Row(
           children: [
@@ -133,20 +151,22 @@ class _ChatDirectPageState extends State<ChatDirectPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
+                  const Text(
                     'Pesan Langsung',
                     style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey[500],
-                      fontWeight: FontWeight.w400,
+                      fontSize: 11.5,
+                      color: AppColors.textMuted,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.3,
                     ),
                   ),
                   Text(
                     widget.receiverNama,
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 15,
                       fontWeight: FontWeight.w800,
-                      color: _textDark,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.3,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -160,20 +180,17 @@ class _ChatDirectPageState extends State<ChatDirectPage> {
             onTap: _loadMessages,
             child: Container(
               margin: const EdgeInsets.only(right: 16),
-              width: 36,
-              height: 36,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: _tealLight,
-                borderRadius: BorderRadius.circular(10),
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: AppShadows.xs,
               ),
-              child: const Icon(Icons.refresh_rounded, color: _teal, size: 18),
+              child: const Icon(Icons.refresh_rounded, color: AppColors.textPrimary, size: 18),
             ),
           ),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: Colors.grey.withOpacity(0.08)),
-        ),
       ),
       body: _loading
           ? const Center(
