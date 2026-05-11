@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+
 import '../../core/api/api_client.dart';
 import '../../core/api/api_config.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/premium_widgets.dart';
 import 'lembur_form_page.dart';
 
+/// Premium monochrome lembur page — matching dashboard design language.
+/// All business logic preserved: pagination, delete, total hours summary.
 class LemburPage extends StatefulWidget {
   const LemburPage({super.key});
 
@@ -13,12 +18,6 @@ class LemburPage extends StatefulWidget {
 
 class _LemburPageState extends State<LemburPage>
     with SingleTickerProviderStateMixin {
-  static const _teal = AppColors.teal;
-  static const _tealDark = AppColors.tealDeep;
-  static const _tealLight = AppColors.tealSoft;
-  static const _bg = AppColors.bg;
-  static const _textDark = AppColors.textPrimary;
-
   List _lemburList = [];
   bool _loading = true;
   String? _error;
@@ -28,24 +27,24 @@ class _LemburPageState extends State<LemburPage>
   int _lastPage = 1;
   bool _loadingMore = false;
 
-  late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
+  late AnimationController _fadeCtrl;
+  late Animation<double> _fadeAnim;
 
   @override
   void initState() {
     super.initState();
-    _fadeController = AnimationController(
+    _fadeCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 500),
     );
-    _fadeAnimation =
-        CurvedAnimation(parent: _fadeController, curve: Curves.easeOut);
+    _fadeAnim =
+        CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOutCubic);
     _loadData();
   }
 
   @override
   void dispose() {
-    _fadeController.dispose();
+    _fadeCtrl.dispose();
     super.dispose();
   }
 
@@ -74,7 +73,7 @@ class _LemburPageState extends State<LemburPage>
         _loading = false;
         _loadingMore = false;
       });
-      _fadeController.forward(from: 0);
+      _fadeCtrl.forward(from: 0);
     } catch (e) {
       setState(() {
         _loading = false;
@@ -97,34 +96,27 @@ class _LemburPageState extends State<LemburPage>
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Text(
-          'Hapus Lembur',
-          style: TextStyle(
-              fontWeight: FontWeight.w800, fontSize: 16, color: _textDark),
-        ),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg)),
+        title: const Text('Hapus Pengajuan?'),
         content: const Text(
-          'Yakin ingin menghapus pengajuan lembur ini?',
-          style: TextStyle(fontSize: 13),
-        ),
+            'Pengajuan lembur akan dihapus permanen. Lanjutkan?'),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Batal',
-                style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+          PremiumButton(
+            label: 'Batal',
+            onTap: () => Navigator.pop(ctx, false),
+            outlined: true,
+            fullWidth: false,
+            height: 44,
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-              elevation: 0,
-            ),
-            child: const Text('Ya, Hapus',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+          const SizedBox(width: 10),
+          PremiumButton(
+            label: 'Hapus',
+            onTap: () => Navigator.pop(ctx, true),
+            background: AppColors.danger,
+            fullWidth: false,
+            height: 44,
           ),
         ],
       ),
@@ -135,10 +127,7 @@ class _LemburPageState extends State<LemburPage>
       await ApiClient.delete('${ApiConfig.lembur}/$id');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Lembur berhasil dihapus.'),
-            backgroundColor: _teal,
-          ),
+          const SnackBar(content: Text('Lembur berhasil dihapus.')),
         );
         _loadData();
       }
@@ -146,9 +135,8 @@ class _LemburPageState extends State<LemburPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Gagal menghapus. Lembur sudah disetujui.'),
-            backgroundColor: Colors.red,
-          ),
+              content:
+                  Text('Gagal menghapus. Lembur mungkin sudah disetujui.')),
         );
       }
     }
@@ -157,16 +145,31 @@ class _LemburPageState extends State<LemburPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: AppColors.canvas,
       body: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) => [
+        headerSliverBuilder: (context, _) => [
           SliverAppBar(
             pinned: true,
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.canvas,
             elevation: 0,
-            surfaceTintColor: Colors.white,
-            iconTheme: const IconThemeData(color: _textDark),
-            toolbarHeight: 64,
+            surfaceTintColor: Colors.transparent,
+            toolbarHeight: 72,
+            titleSpacing: 20,
+            leading: Padding(
+              padding: const EdgeInsets.all(14),
+              child: PressableScale(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: AppShadows.xs,
+                  ),
+                  child: const Icon(Icons.arrow_back_rounded,
+                      size: 20, color: AppColors.black),
+                ),
+              ),
+            ),
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -174,139 +177,125 @@ class _LemburPageState extends State<LemburPage>
                 Text(
                   'Pengajuan',
                   style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[500],
-                    fontWeight: FontWeight.w400,
+                    fontSize: 11.5,
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.3,
                   ),
                 ),
                 const Text(
                   'Lembur Saya',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: _textDark,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.4,
                   ),
                 ),
               ],
             ),
             actions: [
-              GestureDetector(
-                onTap: () async {
-                  final refresh = await Navigator.push<bool>(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const LemburFormPage()),
-                  );
-                  if (refresh == true) _loadData();
-                },
-                child: Container(
-                  margin: const EdgeInsets.only(right: 16),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [_teal, _tealDark],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: _teal.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(Icons.add_rounded, size: 16, color: Colors.white),
-                      SizedBox(width: 5),
-                      Text(
-                        'Ajukan',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
+              Padding(
+                padding: const EdgeInsets.only(right: 20, top: 14, bottom: 14),
+                child: PressableScale(
+                  onTap: () async {
+                    final refresh = await Navigator.push<bool>(
+                      context,
+                      PremiumPageRoute(page: const LemburFormPage()),
+                    );
+                    if (refresh == true) _loadData();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.black,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.add_rounded,
+                            size: 16, color: AppColors.softLime),
+                        SizedBox(width: 6),
+                        Text(
+                          'Ajukan',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.white,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ],
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(1),
-              child: Container(
-                  height: 1, color: Colors.grey.withOpacity(0.08)),
-            ),
           ),
         ],
         body: _loading
-            ? const Center(
-                child: CircularProgressIndicator(
-                  color: _teal,
-                  strokeWidth: 2.5,
-                ),
-              )
+            ? _buildLoadingState()
             : RefreshIndicator(
-                color: _teal,
+                color: AppColors.black,
+                backgroundColor: AppColors.white,
                 onRefresh: _loadData,
                 child: _error != null
                     ? ListView(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: _ErrorBanner(message: _error!),
-                          ),
-                        ],
+                        padding: const EdgeInsets.all(20),
+                        physics: const AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics()),
+                        children: [_ErrorBanner(message: _error!)],
                       )
                     : FadeTransition(
-                        opacity: _fadeAnimation,
+                        opacity: _fadeAnim,
                         child: _lemburList.isEmpty
                             ? _buildEmptyState()
                             : ListView.builder(
+                                physics:
+                                    const AlwaysScrollableScrollPhysics(
+                                        parent: BouncingScrollPhysics()),
                                 padding: const EdgeInsets.fromLTRB(
-                                    16, 16, 16, 32),
+                                    20, 8, 20, 32),
                                 itemCount: _lemburList.length + 2,
                                 itemBuilder: (context, i) {
                                   if (i == 0) return _buildSummaryCard();
                                   if (i == _lemburList.length + 1) {
                                     if (_currentPage < _lastPage) {
                                       return Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 12),
-                                        child: Center(
-                                          child: TextButton(
-                                            onPressed: _loadingMore
-                                                ? null
-                                                : _loadMore,
-                                            child: _loadingMore
-                                                ? const SizedBox(
-                                                    width: 20,
-                                                    height: 20,
-                                                    child:
-                                                        CircularProgressIndicator(
-                                                      color: _teal,
-                                                      strokeWidth: 2,
-                                                    ),
-                                                  )
-                                                : const Text(
-                                                    'Muat lebih banyak',
-                                                    style: TextStyle(
-                                                        color: _teal,
-                                                        fontWeight:
-                                                            FontWeight.w600),
-                                                  ),
-                                          ),
+                                        padding: const EdgeInsets.only(
+                                            top: 12),
+                                        child: PremiumButton(
+                                          label: 'Muat lebih banyak',
+                                          onTap: _loadingMore
+                                              ? null
+                                              : _loadMore,
+                                          outlined: true,
+                                          loading: _loadingMore,
+                                          trailingIcon:
+                                              Icons.expand_more_rounded,
                                         ),
                                       );
                                     }
-                                    return const SizedBox(height: 8);
+                                    return const SizedBox(height: 20);
                                   }
                                   return _buildLemburCard(
-                                      _lemburList[i - 1]);
+                                          _lemburList[i - 1] as Map, i - 1)
+                                      .animate(delay: (40 * (i - 1)).ms)
+                                      .fadeIn(duration: 420.ms)
+                                      .moveY(
+                                          begin: 12,
+                                          end: 0,
+                                          duration: 420.ms,
+                                          curve: Curves.easeOutCubic);
                                 },
                               ),
                       ),
@@ -315,147 +304,237 @@ class _LemburPageState extends State<LemburPage>
     );
   }
 
+  Widget _buildLoadingState() {
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      physics: const NeverScrollableScrollPhysics(),
+      children: const [
+        PremiumSkeleton(height: 120, radius: 28),
+        SizedBox(height: 14),
+        PremiumSkeleton(height: 140, radius: 28),
+        SizedBox(height: 14),
+        PremiumSkeleton(height: 140, radius: 28),
+        SizedBox(height: 14),
+        PremiumSkeleton(height: 140, radius: 28),
+      ],
+    );
+  }
+
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: const BoxDecoration(
-              color: _tealLight,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.more_time_rounded,
-              size: 36,
-              color: _teal,
-            ),
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics()),
+      padding: const EdgeInsets.all(20),
+      children: [
+        _buildSummaryCard(),
+        const SizedBox(height: 60),
+        Center(
+          child: Column(
+            children: [
+              Container(
+                width: 96,
+                height: 96,
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceMuted,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.more_time_rounded,
+                  size: 44,
+                  color: AppColors.textMuted,
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Belum ada pengajuan lembur',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Tekan tombol Ajukan untuk membuat\npengajuan lembur baru.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: AppColors.textMuted,
+                  fontWeight: FontWeight.w500,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 22),
+              SizedBox(
+                width: 220,
+                child: PremiumButton(
+                  label: 'Ajukan Lembur',
+                  leadingIcon: Icons.add_rounded,
+                  onTap: () async {
+                    final refresh = await Navigator.push<bool>(
+                      context,
+                      PremiumPageRoute(page: const LemburFormPage()),
+                    );
+                    if (refresh == true) _loadData();
+                  },
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'Belum ada pengajuan lembur',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: _textDark,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Tap tombol Ajukan untuk membuat pengajuan baru',
-            style: TextStyle(fontSize: 12, color: Colors.grey[400]),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildSummaryCard() {
+    final totalStr = _totalJamBulanIni == _totalJamBulanIni.toInt()
+        ? _totalJamBulanIni.toInt().toString()
+        : _totalJamBulanIni.toStringAsFixed(1);
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(18),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [_teal, _tealDark],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(18),
+        color: AppColors.black,
+        borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: _teal.withOpacity(0.3),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            color: Colors.black.withOpacity(0.18),
+            blurRadius: 28,
+            offset: const Offset(0, 14),
           ),
         ],
       ),
-      child: Row(
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(
-              Icons.schedule_rounded,
-              color: Colors.white,
-              size: 26,
+          Positioned(
+            top: -30,
+            right: -30,
+            child: Container(
+              width: 140,
+              height: 140,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.softLime.withOpacity(0.3),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
             ),
           ),
-          const SizedBox(width: 14),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Total Lembur Bulan Ini',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                ),
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: AppColors.softLime,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Icon(Icons.schedule_rounded,
+                        color: AppColors.black, size: 24),
+                  ),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Text(
+                      'Total lembur\nbulan ini',
+                      style: TextStyle(
+                        color: AppColors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                  AccentChip(
+                    label: '${_lemburList.length} entri',
+                    color: AppColors.softLime,
+                  ),
+                ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                '${_totalJamBulanIni.toStringAsFixed(1)} jam',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                ),
+              const SizedBox(height: 22),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    totalStr,
+                    style: const TextStyle(
+                      color: AppColors.white,
+                      fontSize: 56,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -2,
+                      height: 1,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 10),
+                    child: Text(
+                      'jam',
+                      style: TextStyle(
+                        color: AppColors.softLime,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ],
       ),
-    );
+    )
+        .animate()
+        .fadeIn(duration: 500.ms)
+        .moveY(
+            begin: 16,
+            end: 0,
+            duration: 500.ms,
+            curve: Curves.easeOutCubic);
   }
 
-  Widget _buildLemburCard(Map l) {
+  Widget _buildLemburCard(Map l, int index) {
     final approved = l['status_approve'] == true;
-    final statusColor =
-        approved ? const Color(0xFF4CAF8C) : const Color(0xFFF4A261);
-    final statusBg =
-        approved ? const Color(0xFFE8F8F2) : const Color(0xFFFFF5EE);
-    final statusIcon =
-        approved ? Icons.check_circle_rounded : Icons.pending_rounded;
+    final accent = approved ? AppColors.softLime : AppColors.neonCyan;
     final statusLabel = approved ? 'Disetujui' : 'Menunggu';
+    final statusIcon =
+        approved ? Icons.check_circle_rounded : Icons.schedule_rounded;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    final tanggal = l['tanggal']?.toString() ?? '-';
+    final jamMulai = l['jam_mulai']?.toString() ?? '-';
+    final jamSelesai = l['jam_selesai']?.toString() ?? '-';
+    final jamTotal = l['jam_total']?.toString() ?? '0';
+    final keterangan = l['keterangan']?.toString() ?? '-';
+
+    return PremiumCard(
+      padding: EdgeInsets.zero,
+      radius: 28,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
-                  width: 46,
-                  height: 46,
+                  width: 52,
+                  height: 52,
                   decoration: BoxDecoration(
-                    color: _tealLight,
-                    borderRadius: BorderRadius.circular(14),
+                    color: accent,
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: const Icon(
                     Icons.more_time_rounded,
-                    color: _teal,
-                    size: 22,
+                    color: AppColors.black,
+                    size: 24,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -464,11 +543,12 @@ class _LemburPageState extends State<LemburPage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        l['tanggal']?.toString() ?? '-',
+                        tanggal,
                         style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: _textDark,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                          letterSpacing: -0.2,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -476,14 +556,17 @@ class _LemburPageState extends State<LemburPage>
                       const SizedBox(height: 3),
                       Row(
                         children: [
-                          Icon(Icons.access_time_rounded,
-                              size: 11, color: Colors.grey[400]),
+                          const Icon(Icons.access_time_rounded,
+                              size: 12, color: AppColors.textMuted),
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
-                              '${l['jam_mulai']} – ${l['jam_selesai']}',
-                              style: TextStyle(
-                                  fontSize: 11, color: Colors.grey[500]),
+                              '$jamMulai – $jamSelesai',
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w600,
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -495,22 +578,31 @@ class _LemburPageState extends State<LemburPage>
                 const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 5),
+                      horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: statusBg,
-                    borderRadius: BorderRadius.circular(20),
+                    color: approved
+                        ? AppColors.black
+                        : AppColors.surfaceMuted,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(statusIcon, size: 11, color: statusColor),
+                      Icon(statusIcon,
+                          size: 12,
+                          color: approved
+                              ? AppColors.softLime
+                              : AppColors.textPrimary),
                       const SizedBox(width: 4),
                       Text(
                         statusLabel,
                         style: TextStyle(
                           fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: statusColor,
+                          fontWeight: FontWeight.w800,
+                          color: approved
+                              ? AppColors.white
+                              : AppColors.textPrimary,
+                          letterSpacing: 0.2,
                         ),
                       ),
                     ],
@@ -518,44 +610,58 @@ class _LemburPageState extends State<LemburPage>
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Divider(height: 1, color: Colors.grey[100]),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _infoItem(
-                    Icons.hourglass_bottom_rounded,
-                    'Durasi',
-                    '${l['jam_total']} jam',
-                  ),
-                ),
-                Expanded(
-                  child: _infoItem(
-                    Icons.notes_rounded,
-                    'Keterangan',
-                    l['keterangan']?.toString() ?? '-',
-                  ),
-                ),
-                if (!approved)
-                  GestureDetector(
-                    onTap: () =>
-                        _hapus(int.parse(l['id'].toString())),
-                    child: Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: Colors.red[50],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        Icons.delete_outline_rounded,
-                        color: Colors.red[400],
-                        size: 18,
-                      ),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceMuted,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _infoItem(
+                      Icons.hourglass_bottom_rounded,
+                      'Durasi',
+                      '$jamTotal jam',
                     ),
                   ),
-              ],
+                  Container(
+                    width: 1,
+                    height: 28,
+                    color: AppColors.border,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 2,
+                    child: _infoItem(
+                      Icons.notes_rounded,
+                      'Keterangan',
+                      keterangan,
+                    ),
+                  ),
+                  if (!approved) ...[
+                    const SizedBox(width: 8),
+                    PressableScale(
+                      onTap: () =>
+                          _hapus(int.parse(l['id'].toString())),
+                      child: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.delete_outline_rounded,
+                          color: AppColors.danger,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ],
         ),
@@ -563,36 +669,45 @@ class _LemburPageState extends State<LemburPage>
     );
   }
 
-  Widget _infoItem(IconData icon, String label, String value) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 11, color: Colors.grey[400]),
-              const SizedBox(width: 3),
-              Flexible(
-                child: Text(
-                  label,
-                  style:
-                      TextStyle(fontSize: 10, color: Colors.grey[400]),
-                  overflow: TextOverflow.ellipsis,
+  Widget _infoItem(IconData icon, String label, String value) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 11, color: AppColors.textMuted),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: AppColors.textMuted,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 3),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: _textDark,
+              ],
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+            const SizedBox(height: 3),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+                letterSpacing: -0.2,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       );
 }
 
@@ -603,21 +718,24 @@ class _ErrorBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.red[50],
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.red[200]!),
+        color: AppColors.dangerSoft,
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(
         children: [
-          Icon(Icons.warning_amber_rounded,
-              color: Colors.red[400], size: 20),
+          const Icon(Icons.warning_amber_rounded,
+              color: AppColors.danger, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
-              style: TextStyle(color: Colors.red[600], fontSize: 13),
+              style: const TextStyle(
+                color: AppColors.danger,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],

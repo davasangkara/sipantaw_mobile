@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 class ApiConfig {
   const ApiConfig._();
 
-  static const String baseUrl = 'http://10.5.50.112:8000/api';
+  static const String baseUrl = 'http://10.33.225.98:8000/api';
 
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
