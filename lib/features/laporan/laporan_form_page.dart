@@ -137,21 +137,31 @@ class _LaporanFormPageState extends State<LaporanFormPage>
         if (mounted) setState(() => _aiLocationStatus = 'Mengisi form...');
       }
 
-      // ── Step 2: Isi field alamat dari GPS ─────────────────
-      if (location != null) {
-        _alamatController.text    = location.alamatJalan;
-        _rtrwController.text      = location.rtrw;
-        _kelurahanController.text = location.kelurahan;
-        _kecamatanController.text = location.kecamatan;
-        _kabkotaController.text   = location.kabkota;
+      // ── Step 2: Isi field alamat dari GPS (dalam setState agar UI update) ──
+      if (location != null && mounted) {
+        setState(() {
+          if (location!.alamatJalan.isNotEmpty) {
+            _alamatController.text = location.alamatJalan;
+          }
+          // rtrw dikosongkan karena Nominatim tidak menyediakan RT/RW
+          if (location.kelurahan.isNotEmpty) {
+            _kelurahanController.text = location.kelurahan;
+          }
+          if (location.kecamatan.isNotEmpty) {
+            _kecamatanController.text = location.kecamatan;
+          }
+          if (location.kabkota.isNotEmpty) {
+            _kabkotaController.text = location.kabkota;
+          }
+        });
       }
 
       // ── Step 3: Ambil data pegawai ────────────────────────
       if (mounted) setState(() => _aiLocationStatus = 'Membuat laporan...');
 
-      final pegawai     = await TokenStorage.getPegawai();
-      final jabatan     = pegawai['jabatan'] ?? 'Pegawai';
-      final unit        = pegawai['unit'] ?? 'Unit Kerja';
+      final pegawai = await TokenStorage.getPegawai();
+      final jabatan = pegawai['jabatan'] ?? 'Pegawai';
+      final unit = pegawai['unit'] ?? 'Unit Kerja';
       final kegiatanNama = _kegiatanList
           .firstWhere(
             (k) => k['KegiatanId'] == _kegiatanId,
@@ -168,20 +178,23 @@ class _LaporanFormPageState extends State<LaporanFormPage>
         hari: _hariLabel,
         alamat: location?.alamatJalan.isNotEmpty == true
             ? location!.alamatJalan
-            : (_alamatController.text.trim().isEmpty
+            : _alamatController.text.trim().isEmpty
                 ? null
-                : _alamatController.text.trim()),
+                : _alamatController.text.trim(),
         kota: location?.kabkota.isNotEmpty == true
             ? location!.kabkota
-            : (_kabkotaController.text.trim().isEmpty
+            : _kabkotaController.text.trim().isEmpty
                 ? null
-                : _kabkotaController.text.trim()),
+                : _kabkotaController.text.trim(),
       );
 
-      // ── Step 5: Isi semua field form ──────────────────────
+      // ── Step 5: Isi semua field form dalam satu setState ──
+      if (!mounted) return;
       setState(() {
         // Uraian kinerja
-        for (final c in _uraianControllers) c.dispose();
+        for (final c in _uraianControllers) {
+          c.dispose();
+        }
         _uraianControllers = result.uraianKinerja
             .map((u) => TextEditingController(text: u))
             .toList();
@@ -210,22 +223,26 @@ class _LaporanFormPageState extends State<LaporanFormPage>
         }).toList();
 
         // Link output
-        if (result.linkOutput != null) {
+        if (result.linkOutput != null && result.linkOutput!.isNotEmpty) {
           _linkOutputController.text = result.linkOutput!;
         }
 
         _aiLocationStatus = null;
+        _aiGenerating = false;
       });
 
-      final locMsg = location != null
-          ? ' · Lokasi: ${location.kabkota}'
+      final locMsg = location != null && location.kabkota.isNotEmpty
+          ? ' · ${location.kabkota}'
           : '';
       _showSnack('Laporan digenerate AI ✨$locMsg');
     } catch (e) {
-      setState(() => _aiLocationStatus = null);
-      _showSnack('Gagal generate AI. Coba lagi.', isError: true);
-    } finally {
-      if (mounted) setState(() => _aiGenerating = false);
+      if (mounted) {
+        setState(() {
+          _aiLocationStatus = null;
+          _aiGenerating = false;
+        });
+        _showSnack('Gagal generate AI. Coba lagi.', isError: true);
+      }
     }
   }
 

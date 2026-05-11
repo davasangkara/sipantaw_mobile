@@ -71,9 +71,13 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         setState(() => _error = 'Autentikasi biometrik gagal. Coba lagi.');
         return;
       }
-      // Login dengan NIP yang tersimpan
-      _nipController.text = _savedNip!;
-      await _checkNip();
+      // Restore session dari biometric token — langsung ke dashboard tanpa OTP
+      final success = await AuthService.loginWithBiometric();
+      if (success && mounted) {
+        Navigator.pushReplacementNamed(context, '/dashboard');
+      } else {
+        setState(() => _error = 'Sesi tidak ditemukan. Silakan login dengan NIP.');
+      }
     } catch (e) {
       setState(() => _error = 'Gagal autentikasi: ${e.toString()}');
     } finally {

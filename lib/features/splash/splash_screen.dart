@@ -5,13 +5,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../auth/biometric_login_page.dart';
 
-/// Premium monochrome splash — black typography, lime + cyan accents,
-/// floating animated orbs, pill loader. Apple-level polish.
 class SplashScreen extends StatefulWidget {
   final bool isLoggedIn;
+  final bool canBiometricLogin;
 
-  const SplashScreen({super.key, required this.isLoggedIn});
+  const SplashScreen({
+    super.key,
+    required this.isLoggedIn,
+    this.canBiometricLogin = false,
+  });
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -43,8 +47,19 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _scheduleNavigation() async {
     await Future.delayed(const Duration(milliseconds: 2600));
     if (!mounted) return;
-    Navigator.of(context)
-        .pushReplacementNamed(widget.isLoggedIn ? '/dashboard' : '/login');
+
+    if (widget.isLoggedIn) {
+      // Sudah login aktif → langsung dashboard
+      Navigator.of(context).pushReplacementNamed('/dashboard');
+    } else if (widget.canBiometricLogin) {
+      // Tidak login tapi punya biometric token → halaman Face ID
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const BiometricLoginPage()),
+      );
+    } else {
+      // Login pertama kali → halaman NIP
+      Navigator.of(context).pushReplacementNamed('/login');
+    }
   }
 
   @override

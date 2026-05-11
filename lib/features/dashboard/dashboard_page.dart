@@ -21,6 +21,7 @@ import '../lembur/lembur_page.dart';
 import '../skp/skp_page.dart';
 import 'package:sipantaw_mobile/features/chat/chat_page.dart';
 import '../absensi/absensi_foto_page.dart';
+import '../absensi/absensi_telat_page.dart';
 
 
 class DashboardPage extends StatefulWidget {
@@ -561,6 +562,10 @@ class _DashboardPageState extends State<DashboardPage>
     } else if (m.route == '/absensi') {
       await Navigator.push(
           context, PremiumPageRoute(page: const AbsensiFotoPage()));
+      _loadData();
+    } else if (m.route == '/absensi-telat') {
+      await Navigator.push(
+          context, PremiumPageRoute(page: const AbsensiTelatPage()));
       _loadData();
     } else if (m.route == '/riwayat') {
       await Navigator.push(
@@ -2056,6 +2061,8 @@ class _DashboardPageState extends State<DashboardPage>
   List<_MenuItem> _menuItems() => const [
         _MenuItem('Absensi', Icons.fingerprint_rounded,
             AppColors.neonCyan, '/absensi'),
+        _MenuItem('Telat Absen', Icons.alarm_rounded,
+            AppColors.blush, '/absensi-telat'),
         _MenuItem('Laporan', Icons.edit_note_rounded,
             AppColors.softLime, '/laporan'),
         _MenuItem('Riwayat', Icons.manage_history_rounded,

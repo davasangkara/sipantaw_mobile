@@ -8,10 +8,7 @@ class AuthService {
   // Step 1 - Cek NIP
   static Future<Map<String, dynamic>> checkNip(String nip) async {
     try {
-      final res = await ApiClient.post(
-        ApiConfig.checkNip,
-        data: {'NIP': nip},
-      );
+      final res = await ApiClient.post(ApiConfig.checkNip, data: {'NIP': nip});
       return res.data;
     } on DioException catch (e) {
       throw _handleError(e);
@@ -31,24 +28,28 @@ class AuthService {
     }
   }
 
-  // Step 3 - Verifikasi OTP
+  // Step 3 - Verifikasi OTP → simpan token + aktifkan biometric
   static Future<Map<String, dynamic>> verifyOtp(
     String tempKey,
     String otp, {
-    String? nip, // NIP untuk disimpan ke biometric
+    String? nip,
   }) async {
     try {
       final res = await ApiClient.post(
         ApiConfig.verifyOtp,
         data: {'temp_key': tempKey, 'otp': otp},
       );
-
-      // Simpan token dan data pegawai
       final data = res.data;
-      await TokenStorage.saveToken(data['token']);
+      final token = data['token'] as String;
+
+      // Simpan token aktif
+      await TokenStorage.saveToken(token);
       await TokenStorage.savePegawai(data['pegawai']);
 
-      // Simpan NIP untuk biometric login jika disediakan
+      // Simpan biometric token (sama dengan token, tapi tidak dihapus saat logout biasa)
+      await TokenStorage.saveBiometricToken(token);
+
+      // Simpan NIP untuk biometric
       if (nip != null && nip.isNotEmpty) {
         await BiometricService.saveNipForBiometric(nip);
       }
@@ -59,16 +60,30 @@ class AuthService {
     }
   }
 
-  // Logout — tidak hapus biometric data agar bisa re-login dengan Face ID
+  /// Login dengan biometric — restore token dari biometric storage, langsung masuk
+  static Future<bool> loginWithBiometric() async {
+    try {
+      final biometricToken = await TokenStorage.getBiometricToken();
+      if (biometricToken == null || biometricToken.isEmpty) return false;
+
+      // Restore token aktif dari biometric token
+      await TokenStorage.saveToken(biometricToken);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Logout biasa — hapus token aktif, PERTAHANKAN biometric token
   static Future<void> logout() async {
     try {
       await ApiClient.post(ApiConfig.logout);
     } catch (_) {}
-    await TokenStorage.clearAll();
-    // Biometric data TIDAK dihapus — user bisa login lagi dengan Face ID
+    await TokenStorage.clearForLogout();
+    // biometric token TIDAK dihapus → bisa login lagi dengan Face ID
   }
 
-  // Logout penuh — hapus semua termasuk biometric
+  /// Logout penuh — hapus semua termasuk biometric
   static Future<void> logoutFull() async {
     try {
       await ApiClient.post(ApiConfig.logout);
@@ -77,7 +92,6 @@ class AuthService {
     await BiometricService.clearBiometric();
   }
 
-  // Error handler
   static String _handleError(DioException e) {
     if (e.response?.data != null) {
       final data = e.response!.data;
