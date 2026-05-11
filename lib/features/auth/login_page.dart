@@ -7,11 +7,6 @@ import '../../core/theme/premium_widgets.dart';
 import '../../core/services/biometric_service.dart';
 import 'auth_service.dart';
 
-/// Premium monochrome login — editorial typography, floating card,
-/// pill buttons, animated step indicator, smooth state transitions.
-///
-/// Business logic is unchanged: checkNip → (maybe) registerPhone →
-/// sendOtp → verifyOtp. Only UI/UX is redesigned.
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -32,7 +27,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   bool _showPhone = false;
   String? _error;
 
-  // Biometric state
+ 
   bool _biometricAvailable = false;
   bool _biometricEnabled = false;
   bool _biometricLoading = false;

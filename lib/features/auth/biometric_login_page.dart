@@ -78,14 +78,14 @@ class _BiometricLoginPageState extends State<BiometricLoginPage>
     });
 
     try {
-      // Step 1: Verifikasi biometrik (Face ID / fingerprint)
-      final ok = await BiometricService.authenticate(
+      // Step 1: Verifikasi biometrik dengan pesan error detail
+      final authResult = await BiometricService.authenticateWithDetail(
         reason: 'Verifikasi identitas untuk masuk ke SIPANTAW WFA',
       );
 
-      if (!ok) {
+      if (!authResult.success) {
         setState(() {
-          _error = 'Verifikasi gagal. Coba lagi atau gunakan NIP.';
+          _error = authResult.error ?? 'Verifikasi gagal. Coba lagi atau gunakan NIP.';
           _loading = false;
         });
         return;
@@ -115,7 +115,7 @@ class _BiometricLoginPageState extends State<BiometricLoginPage>
       }
     } catch (e) {
       setState(() {
-        _error = 'Terjadi kesalahan. Coba lagi.';
+        _error = 'Terjadi kesalahan: ${e.toString()}';
         _loading = false;
       });
     }

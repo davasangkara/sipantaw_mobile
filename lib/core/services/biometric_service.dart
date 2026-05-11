@@ -1,8 +1,9 @@
 import 'package:local_auth/local_auth.dart';
+import 'package:local_auth/error_codes.dart' as auth_error;
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Service untuk Face ID / Fingerprint authentication.
-/// Menyimpan NIP terakhir agar bisa re-login tanpa ketik NIP.
 class BiometricService {
   static final _auth = LocalAuthentication();
   static const _storage = FlutterSecureStorage();
@@ -13,8 +14,8 @@ class BiometricService {
   static Future<bool> isAvailable() async {
     try {
       final canCheck = await _auth.canCheckBiometrics;
-      final isDeviceSupported = await _auth.isDeviceSupported();
-      return canCheck && isDeviceSupported;
+      final isSupported = await _auth.isDeviceSupported();
+      return canCheck || isSupported; // OR bukan AND — device PIN juga valid
     } catch (_) {
       return false;
     }
@@ -31,26 +32,56 @@ class BiometricService {
 
   /// Cek apakah Face ID tersedia
   static Future<bool> hasFaceId() async {
-    final biometrics = await getAvailableBiometrics();
-    return biometrics.contains(BiometricType.face);
-  }
-
-  /// Autentikasi dengan biometrik
-  static Future<bool> authenticate({
-    String reason = 'Verifikasi identitas Anda untuk masuk ke SIPANTAW',
-  }) async {
     try {
-      return await _auth.authenticate(
-        localizedReason: reason,
-        options: const AuthenticationOptions(
-          stickyAuth: true,
-          biometricOnly: false,
-          useErrorDialogs: true,
-        ),
-      );
+      final biometrics = await getAvailableBiometrics();
+      return biometrics.contains(BiometricType.face) ||
+          biometrics.contains(BiometricType.strong);
     } catch (_) {
       return false;
     }
+  }
+
+  /// Autentikasi dengan biometrik — return (success, errorMessage)
+  static Future<({bool success, String? error})> authenticateWithDetail({
+    String reason = 'Verifikasi identitas Anda untuk masuk ke SIPANTAW WFA',
+  }) async {
+    try {
+      final result = await _auth.authenticate(
+        localizedReason: reason,
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+          biometricOnly: false, // izinkan PIN/password sebagai fallback
+          useErrorDialogs: true,
+          sensitiveTransaction: false,
+        ),
+      );
+      return (success: result, error: result ? null : 'Autentikasi dibatalkan');
+    } on PlatformException catch (e) {
+      final msg = switch (e.code) {
+        auth_error.notAvailable =>
+          'Biometrik tidak tersedia di perangkat ini',
+        auth_error.notEnrolled =>
+          'Belum ada biometrik yang terdaftar. Daftarkan di Pengaturan.',
+        auth_error.lockedOut =>
+          'Terlalu banyak percobaan. Coba lagi nanti.',
+        auth_error.permanentlyLockedOut =>
+          'Biometrik dikunci. Gunakan PIN perangkat.',
+        auth_error.passcodeNotSet =>
+          'PIN perangkat belum diatur. Atur di Pengaturan.',
+        _ => e.message ?? 'Autentikasi gagal (${e.code})',
+      };
+      return (success: false, error: msg);
+    } catch (e) {
+      return (success: false, error: 'Terjadi kesalahan: ${e.toString()}');
+    }
+  }
+
+  /// Autentikasi sederhana — return bool
+  static Future<bool> authenticate({
+    String reason = 'Verifikasi identitas Anda untuk masuk ke SIPANTAW WFA',
+  }) async {
+    final result = await authenticateWithDetail(reason: reason);
+    return result.success;
   }
 
   /// Simpan NIP untuk biometric login
@@ -59,22 +90,16 @@ class BiometricService {
     await _storage.write(key: _keyEnabled, value: 'true');
   }
 
-  /// Ambil NIP yang tersimpan
-  static Future<String?> getSavedNip() =>
-      _storage.read(key: _keyNip);
+  static Future<String?> getSavedNip() => _storage.read(key: _keyNip);
 
-  /// Cek apakah biometric login diaktifkan
   static Future<bool> isBiometricEnabled() async {
     final val = await _storage.read(key: _keyEnabled);
     return val == 'true';
   }
 
-  /// Nonaktifkan biometric login
-  static Future<void> disableBiometric() async {
-    await _storage.delete(key: _keyEnabled);
-  }
+  static Future<void> disableBiometric() =>
+      _storage.delete(key: _keyEnabled);
 
-  /// Hapus semua data biometric
   static Future<void> clearBiometric() async {
     await _storage.delete(key: _keyNip);
     await _storage.delete(key: _keyEnabled);
