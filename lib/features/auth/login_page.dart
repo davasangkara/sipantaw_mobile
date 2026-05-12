@@ -66,7 +66,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         setState(() => _error = 'Autentikasi biometrik gagal. Coba lagi.');
         return;
       }
-      // Restore session dari biometric token — langsung ke dashboard tanpa OTP
+    
       final success = await AuthService.loginWithBiometric();
       if (success && mounted) {
         Navigator.pushReplacementNamed(context, '/dashboard');

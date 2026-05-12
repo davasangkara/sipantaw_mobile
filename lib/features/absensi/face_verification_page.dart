@@ -7,21 +7,80 @@ import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/theme/app_theme.dart';
 
-/// Hasil verifikasi wajah
+/// Hasil verifikasi wajah + deteksi mood otomatis
 class FaceVerificationResult {
   final bool success;
   final String? fotoBase64;
   final String? errorMessage;
+  final DetectedMood? mood;
 
   const FaceVerificationResult({
     required this.success,
     this.fotoBase64,
     this.errorMessage,
+    this.mood,
   });
 }
 
-/// Halaman verifikasi wajah real-time menggunakan kamera depan.
-/// Mendeteksi wajah, memastikan hanya 1 wajah, lalu capture foto.
+/// Mood hasil deteksi otomatis — tidak dipilih user
+class DetectedMood {
+  final String emoji;
+  final String label;
+  final String value;
+  final Color color;
+  final Color bg;
+  final double smileScore; // 0.0 - 1.0
+
+  const DetectedMood({
+    required this.emoji,
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.bg,
+    required this.smileScore,
+  });
+
+  static DetectedMood fromSmileProbability(double smile) {
+    if (smile >= 0.75) {
+      return DetectedMood(
+        emoji: '😄',
+        label: 'Sangat Senang',
+        value: 'very_happy',
+        color: const Color(0xFF34C759),
+        bg: const Color(0xFFE8F8EE),
+        smileScore: smile,
+      );
+    } else if (smile >= 0.4) {
+      return DetectedMood(
+        emoji: '🙂',
+        label: 'Baik',
+        value: 'good',
+        color: const Color(0xFF007AFF),
+        bg: const Color(0xFFE5F1FF),
+        smileScore: smile,
+      );
+    } else if (smile >= 0.15) {
+      return DetectedMood(
+        emoji: '😐',
+        label: 'Biasa',
+        value: 'neutral',
+        color: const Color(0xFFFF9500),
+        bg: const Color(0xFFFFF3E0),
+        smileScore: smile,
+      );
+    } else {
+      return DetectedMood(
+        emoji: '😔',
+        label: 'Tidak Happy',
+        value: 'unhappy',
+        color: const Color(0xFFFF3B30),
+        bg: const Color(0xFFFFECEB),
+        smileScore: smile,
+      );
+    }
+  }
+}
+
 class FaceVerificationPage extends StatefulWidget {
   final String title;
   final String subtitle;
@@ -44,17 +103,24 @@ class _FaceVerificationPageState extends State<FaceVerificationPage>
   bool _isInitializing = true;
   bool _isProcessing = false;
   bool _isCapturing = false;
-  String _statusMessage = 'Menginisialisasi kamera...';
   _FaceStatus _faceStatus = _FaceStatus.noFace;
 
-  // Animasi lingkaran
+  // Animasi
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
   late AnimationController _successCtrl;
   late Animation<double> _successAnim;
 
-  // Countdown sebelum capture
+  // Countdown
   int _countdown = 0;
+  bool _countdownRunning = false;
+
+  // Frame skip counter — proses tiap 3 frame saja
+  int _frameCounter = 0;
+
+  // Smile probability running average
+  final List<double> _smileSamples = [];
+  double _avgSmile = 0.0;
 
   @override
   void initState() {
@@ -81,7 +147,6 @@ class _FaceVerificationPageState extends State<FaceVerificationPage>
   Future<void> _initCamera() async {
     try {
       final cameras = await availableCameras();
-      // Pilih kamera depan
       final frontCamera = cameras.firstWhere(
         (c) => c.lensDirection == CameraLensDirection.front,
         orElse: () => cameras.first,
@@ -89,35 +154,31 @@ class _FaceVerificationPageState extends State<FaceVerificationPage>
 
       _cameraController = CameraController(
         frontCamera,
-        ResolutionPreset.high,
+        ResolutionPreset.medium, // medium cukup untuk face detection
         enableAudio: false,
         imageFormatGroup: ImageFormatGroup.nv21,
       );
 
       await _cameraController!.initialize();
 
-      // Inisialisasi face detector
       _faceDetector = FaceDetector(
         options: FaceDetectorOptions(
-          enableClassification: true,
+          enableClassification: true, // perlu untuk smile probability
           enableLandmarks: false,
+          enableContours: false,
           performanceMode: FaceDetectorMode.fast,
           minFaceSize: 0.15,
         ),
       );
 
       if (mounted) {
-        setState(() {
-          _isInitializing = false;
-          _statusMessage = widget.subtitle;
-        });
+        setState(() => _isInitializing = false);
         _startFaceDetection();
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() {
           _isInitializing = false;
-          _statusMessage = 'Gagal membuka kamera. Periksa izin kamera.';
           _faceStatus = _FaceStatus.error;
         });
       }
@@ -127,6 +188,11 @@ class _FaceVerificationPageState extends State<FaceVerificationPage>
   void _startFaceDetection() {
     _cameraController?.startImageStream((CameraImage image) async {
       if (_isProcessing || _isCapturing || !mounted) return;
+
+      // Throttle — proses tiap 3 frame
+      _frameCounter++;
+      if (_frameCounter % 3 != 0) return;
+
       _isProcessing = true;
 
       try {
@@ -136,45 +202,58 @@ class _FaceVerificationPageState extends State<FaceVerificationPage>
           return;
         }
 
+        _FaceStatus newStatus;
+
         if (faces.isEmpty) {
-          setState(() {
-            _faceStatus = _FaceStatus.noFace;
-            _statusMessage = 'Tidak ada wajah terdeteksi';
-            _countdown = 0;
-          });
+          newStatus = _FaceStatus.noFace;
+          _resetSmileSamples();
         } else if (faces.length > 1) {
-          setState(() {
-            _faceStatus = _FaceStatus.multipleFaces;
-            _statusMessage = 'Hanya 1 wajah yang diperbolehkan';
-            _countdown = 0;
-          });
+          newStatus = _FaceStatus.multipleFaces;
+          _resetSmileSamples();
         } else {
           final face = faces.first;
           final eyesOpen = (face.leftEyeOpenProbability ?? 1.0) > 0.5 &&
               (face.rightEyeOpenProbability ?? 1.0) > 0.5;
 
           if (!eyesOpen) {
-            setState(() {
-              _faceStatus = _FaceStatus.eyesClosed;
-              _statusMessage = 'Buka mata Anda';
-              _countdown = 0;
-            });
+            newStatus = _FaceStatus.eyesClosed;
+            _resetSmileSamples();
           } else {
-            // Wajah valid — mulai countdown
-            if (_faceStatus != _FaceStatus.detected) {
-              setState(() {
-                _faceStatus = _FaceStatus.detected;
-                _statusMessage = 'Wajah terdeteksi! Tahan sebentar...';
-                _countdown = 3;
-              });
-              _startCountdown();
-            }
+            newStatus = _FaceStatus.detected;
+            // Kumpulkan sampel smile probability
+            final smile = face.smilingProbability ?? 0.0;
+            _smileSamples.add(smile);
+            if (_smileSamples.length > 10) _smileSamples.removeAt(0);
+            _avgSmile = _smileSamples.isEmpty
+                ? 0.0
+                : _smileSamples.reduce((a, b) => a + b) / _smileSamples.length;
+          }
+        }
+
+        // HANYA setState saat status berubah — ini kunci fix flicker
+        if (_faceStatus != newStatus) {
+          if (mounted) {
+            setState(() => _faceStatus = newStatus);
+          }
+
+          // Mulai countdown jika baru terdeteksi
+          if (newStatus == _FaceStatus.detected && !_countdownRunning) {
+            _startCountdown();
           }
         }
       } catch (_) {}
 
       _isProcessing = false;
     });
+  }
+
+  void _resetSmileSamples() {
+    _smileSamples.clear();
+    _avgSmile = 0.0;
+    _countdownRunning = false;
+    if (_countdown > 0 && mounted) {
+      setState(() => _countdown = 0);
+    }
   }
 
   Future<List<Face>> _detectFaces(CameraImage image) async {
@@ -200,11 +279,19 @@ class _FaceVerificationPageState extends State<FaceVerificationPage>
   }
 
   void _startCountdown() async {
+    _countdownRunning = true;
     for (int i = 3; i >= 1; i--) {
-      if (!mounted || _faceStatus != _FaceStatus.detected) return;
+      if (!mounted || _faceStatus != _FaceStatus.detected) {
+        _countdownRunning = false;
+        if (mounted && _countdown != 0) {
+          setState(() => _countdown = 0);
+        }
+        return;
+      }
       setState(() => _countdown = i);
       await Future.delayed(const Duration(seconds: 1));
     }
+    _countdownRunning = false;
     if (mounted && _faceStatus == _FaceStatus.detected) {
       _capturePhoto();
     }
@@ -215,7 +302,6 @@ class _FaceVerificationPageState extends State<FaceVerificationPage>
     setState(() {
       _isCapturing = true;
       _faceStatus = _FaceStatus.capturing;
-      _statusMessage = 'Mengambil foto...';
       _countdown = 0;
     });
 
@@ -227,28 +313,33 @@ class _FaceVerificationPageState extends State<FaceVerificationPage>
       final bytes = await File(xFile.path).readAsBytes();
       final base64Str = 'data:image/jpeg;base64,${base64Encode(bytes)}';
 
-      // Animasi sukses
-      await _successCtrl.forward();
-      setState(() {
-        _faceStatus = _FaceStatus.success;
-        _statusMessage = 'Verifikasi berhasil!';
-      });
+      // Deteksi mood dari average smile probability
+      final mood = DetectedMood.fromSmileProbability(_avgSmile);
 
-      await Future.delayed(const Duration(milliseconds: 800));
+      await _successCtrl.forward();
+      if (mounted) {
+        setState(() => _faceStatus = _FaceStatus.success);
+      }
+
+      await Future.delayed(const Duration(milliseconds: 900));
 
       if (mounted) {
         Navigator.pop(
           context,
-          FaceVerificationResult(success: true, fotoBase64: base64Str),
+          FaceVerificationResult(
+            success: true,
+            fotoBase64: base64Str,
+            mood: mood,
+          ),
         );
       }
-    } catch (e) {
-      setState(() {
-        _isCapturing = false;
-        _faceStatus = _FaceStatus.error;
-        _statusMessage = 'Gagal mengambil foto. Coba lagi.';
-      });
-      // Restart stream
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isCapturing = false;
+          _faceStatus = _FaceStatus.error;
+        });
+      }
       _startFaceDetection();
     }
   }
@@ -257,7 +348,7 @@ class _FaceVerificationPageState extends State<FaceVerificationPage>
   void dispose() {
     _pulseCtrl.dispose();
     _successCtrl.dispose();
-    _cameraController?.stopImageStream();
+    _cameraController?.stopImageStream().catchError((_) {});
     _cameraController?.dispose();
     _faceDetector?.close();
     super.dispose();
@@ -265,11 +356,28 @@ class _FaceVerificationPageState extends State<FaceVerificationPage>
 
   Color get _ringColor {
     return switch (_faceStatus) {
-      _FaceStatus.detected || _FaceStatus.capturing => AppColors.softLime,
-      _FaceStatus.success => AppColors.softLime,
+      _FaceStatus.detected ||
+      _FaceStatus.capturing ||
+      _FaceStatus.success =>
+        AppColors.softLime,
       _FaceStatus.multipleFaces || _FaceStatus.eyesClosed => AppColors.blush,
       _FaceStatus.error => AppColors.danger,
       _ => Colors.white.withValues(alpha: 0.4),
+    };
+  }
+
+  String get _statusMessage {
+    if (_isInitializing) return 'Menginisialisasi kamera...';
+    return switch (_faceStatus) {
+      _FaceStatus.noFace => widget.subtitle,
+      _FaceStatus.detected => _countdown > 0
+          ? 'Tahan posisi...'
+          : 'Wajah terdeteksi!',
+      _FaceStatus.multipleFaces => 'Hanya 1 wajah yang diperbolehkan',
+      _FaceStatus.eyesClosed => 'Buka mata Anda',
+      _FaceStatus.capturing => 'Mengambil foto...',
+      _FaceStatus.success => 'Verifikasi berhasil!',
+      _FaceStatus.error => 'Gagal membuka kamera. Periksa izin kamera.',
     };
   }
 
@@ -282,13 +390,13 @@ class _FaceVerificationPageState extends State<FaceVerificationPage>
       backgroundColor: AppColors.black,
       body: Stack(
         children: [
-          // ── Kamera preview ──────────────────────────────────
+          // Kamera preview
           if (!_isInitializing && _cameraController != null)
             Positioned.fill(
               child: CameraPreview(_cameraController!),
             ),
 
-          // ── Overlay gelap dengan lubang oval ───────────────
+          // Overlay oval
           Positioned.fill(
             child: CustomPaint(
               painter: _OvalOverlayPainter(
@@ -301,7 +409,7 @@ class _FaceVerificationPageState extends State<FaceVerificationPage>
             ),
           ),
 
-          // ── Animasi pulse ring ──────────────────────────────
+          // Pulse ring saat terdeteksi
           if (_faceStatus == _FaceStatus.detected)
             Center(
               child: AnimatedBuilder(
@@ -323,7 +431,7 @@ class _FaceVerificationPageState extends State<FaceVerificationPage>
               ),
             ),
 
-          // ── Countdown ──────────────────────────────────────
+          // Countdown
           if (_countdown > 0)
             Center(
               child: Text(
@@ -334,15 +442,18 @@ class _FaceVerificationPageState extends State<FaceVerificationPage>
                   color: AppColors.softLime,
                   letterSpacing: -4,
                 ),
-              ).animate().scale(
+              )
+                  .animate(key: ValueKey(_countdown))
+                  .scale(
                     begin: const Offset(0.5, 0.5),
                     end: const Offset(1.0, 1.0),
                     duration: 300.ms,
                     curve: Curves.easeOutBack,
-                  ),
+                  )
+                  .fadeIn(duration: 200.ms),
             ),
 
-          // ── Success checkmark ───────────────────────────────
+          // Success checkmark
           if (_faceStatus == _FaceStatus.success)
             Center(
               child: AnimatedBuilder(
@@ -352,7 +463,7 @@ class _FaceVerificationPageState extends State<FaceVerificationPage>
                   child: Container(
                     width: 80,
                     height: 80,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: AppColors.softLime,
                       shape: BoxShape.circle,
                     ),
@@ -366,7 +477,7 @@ class _FaceVerificationPageState extends State<FaceVerificationPage>
               ),
             ),
 
-          // ── Header ─────────────────────────────────────────
+          // Header
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
@@ -393,20 +504,14 @@ class _FaceVerificationPageState extends State<FaceVerificationPage>
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          widget.title,
-                          style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      widget.title,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: -0.3,
+                      ),
                     ),
                   ),
                 ],
@@ -414,7 +519,7 @@ class _FaceVerificationPageState extends State<FaceVerificationPage>
             ),
           ),
 
-          // ── Status bar bawah ────────────────────────────────
+          // Status bar bawah — pakai AnimatedSwitcher untuk smooth transition
           Positioned(
             bottom: 0,
             left: 0,
@@ -425,7 +530,7 @@ class _FaceVerificationPageState extends State<FaceVerificationPage>
                 margin: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.75),
+                  color: Colors.black.withValues(alpha: 0.78),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
                     color: Colors.white.withValues(alpha: 0.08),
@@ -434,7 +539,6 @@ class _FaceVerificationPageState extends State<FaceVerificationPage>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Status icon + text
                     Row(
                       children: [
                         _StatusIcon(status: _faceStatus),
@@ -443,8 +547,8 @@ class _FaceVerificationPageState extends State<FaceVerificationPage>
                           child: AnimatedSwitcher(
                             duration: const Duration(milliseconds: 250),
                             child: Text(
-                              key: ValueKey(_statusMessage),
                               _statusMessage,
+                              key: ValueKey(_statusMessage),
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -465,21 +569,19 @@ class _FaceVerificationPageState extends State<FaceVerificationPage>
                         color: AppColors.softLime,
                       ),
                     ],
-                    // Tips
                     if (!_isInitializing &&
                         _faceStatus != _FaceStatus.success) ...[
                       const SizedBox(height: 14),
                       const Divider(color: Colors.white12, height: 1),
                       const SizedBox(height: 12),
-                      Row(
+                      const Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: const [
+                        children: [
                           _TipItem(
                               icon: Icons.light_mode_rounded,
                               label: 'Cahaya cukup'),
                           _TipItem(
-                              icon: Icons.face_rounded,
-                              label: '1 wajah saja'),
+                              icon: Icons.face_rounded, label: '1 wajah saja'),
                           _TipItem(
                               icon: Icons.remove_red_eye_rounded,
                               label: 'Mata terbuka'),
@@ -514,7 +616,8 @@ class _StatusIcon extends StatelessWidget {
       _ => (Icons.face_outlined, Colors.white54),
     };
 
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
       width: 36,
       height: 36,
       decoration: BoxDecoration(
@@ -573,7 +676,6 @@ class _OvalOverlayPainter extends CustomPainter {
       height: ovalSize * 1.25,
     );
 
-    // Overlay gelap
     final overlayPaint = Paint()..color = Colors.black.withValues(alpha: 0.55);
     final overlayPath = Path()
       ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
@@ -581,22 +683,20 @@ class _OvalOverlayPainter extends CustomPainter {
       ..fillType = PathFillType.evenOdd;
     canvas.drawPath(overlayPath, overlayPaint);
 
-    // Ring oval
     final ringPaint = Paint()
       ..color = ringColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = isDetected ? 3.5 : 2.0;
     canvas.drawOval(ovalRect, ringPaint);
 
-    // Corner accents (4 sudut)
     final accentPaint = Paint()
       ..color = ringColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4
       ..strokeCap = StrokeCap.round;
 
-    const arcLen = 0.35; // radian
-    final positions = [0.0, 1.57, 3.14, 4.71]; // top, right, bottom, left
+    const arcLen = 0.35;
+    final positions = [0.0, 1.57, 3.14, 4.71];
     for (final angle in positions) {
       canvas.drawArc(ovalRect, angle - arcLen / 2, arcLen, false, accentPaint);
     }

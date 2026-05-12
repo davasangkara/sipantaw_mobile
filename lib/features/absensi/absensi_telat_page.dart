@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -75,19 +74,15 @@ class _AbsensiTelatPageState extends State<AbsensiTelatPage> {
         _ => Colors.grey,
       };
 
-  /// Tampilkan mood picker, lalu face verification, lalu kirim API
+  /// Absen telat — langsung ke face verification, mood terdeteksi otomatis
   Future<void> _absenTelat(int jenis) async {
-    // Step 1: Pilih mood
-    final mood = await _showMoodPicker(jenis);
-    if (mood == null || !mounted) return;
-
-    // Step 2: Verifikasi wajah
+    // Face verification (sekaligus deteksi mood otomatis)
     final result = await Navigator.push<FaceVerificationResult>(
       context,
       MaterialPageRoute(
         builder: (_) => FaceVerificationPage(
-          title: 'Verifikasi Absen Telat',
-          subtitle: 'Posisikan wajah untuk absen ${_namaJenis(jenis)}',
+          title: 'Absen ${_namaJenis(jenis)}',
+          subtitle: 'Posisikan wajah Anda di dalam lingkaran',
         ),
       ),
     );
@@ -105,7 +100,9 @@ class _AbsensiTelatPageState extends State<AbsensiTelatPage> {
       return;
     }
 
-    // Step 3: Kirim ke API
+    final mood = result.mood;
+
+    // Kirim ke API
     setState(() => _submitting = true);
     if (!mounted) return;
 
@@ -144,8 +141,9 @@ class _AbsensiTelatPageState extends State<AbsensiTelatPage> {
           'tanggal': today,
           'timezone_name': 'Asia/Jakarta',
           'is_telat': true,
-          'mood': mood.value,
-          'mood_label': mood.label,
+          if (mood != null) 'mood': mood.value,
+          if (mood != null) 'mood_label': mood.label,
+          if (mood != null) 'mood_score': mood.smileScore.toStringAsFixed(2),
           'alasan_telat': 'Absen di luar jam aktif',
         },
       );
@@ -154,7 +152,15 @@ class _AbsensiTelatPageState extends State<AbsensiTelatPage> {
       Navigator.pop(context); // tutup loading
 
       if (res.data['success'] == true) {
-        _showSuccessSheet(mood, _namaJenis(jenis));
+        // Tampilkan success sheet dengan mood hasil deteksi
+        if (mood != null) {
+          _showSuccessSheet(mood, _namaJenis(jenis));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(res.data['message'] ?? 'Absen berhasil!'),
+            backgroundColor: AppColors.black,
+          ));
+        }
         _loadStatus();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -177,22 +183,12 @@ class _AbsensiTelatPageState extends State<AbsensiTelatPage> {
     }
   }
 
-  /// Bottom sheet pilih mood
-  Future<_MoodData?> _showMoodPicker(int jenis) {
-    return showModalBottomSheet<_MoodData>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => _MoodPickerSheet(namaJenis: _namaJenis(jenis)),
-    );
-  }
-
-  /// Bottom sheet sukses
-  void _showSuccessSheet(_MoodData mood, String namaJenis) {
+  void _showSuccessSheet(DetectedMood mood, String namaJenis) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => _SuccessSheet(mood: mood, namaJenis: namaJenis),
+      isScrollControlled: true,
+      builder: (_) => _SuccessSheet(mood: mood, namaJenis: namaJenis),
     );
   }
 
@@ -336,7 +332,7 @@ class _AbsensiTelatPageState extends State<AbsensiTelatPage> {
                 ),
                 SizedBox(height: 3),
                 Text(
-                  'Absen telat akan dicatat beserta mood Anda dan memerlukan verifikasi wajah.',
+                  'Absen telat akan dicatat. Mood Anda terdeteksi otomatis saat verifikasi wajah.',
                   style: TextStyle(
                     fontSize: 12,
                     color: Color(0xFF8B6914),
@@ -365,8 +361,8 @@ class _AbsensiTelatPageState extends State<AbsensiTelatPage> {
         const SizedBox(width: 10),
         Expanded(
           child: _InfoChip(
-            icon: Icons.emoji_emotions_rounded,
-            label: 'Rating Mood',
+            icon: Icons.auto_awesome_rounded,
+            label: 'Deteksi Mood Otomatis',
             color: const Color(0xFF7C3AED),
             iconColor: Colors.white,
           ),
@@ -527,7 +523,7 @@ class _InfoChip extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11.5,
                 fontWeight: FontWeight.w700,
                 color: iconColor,
               ),
@@ -540,193 +536,9 @@ class _InfoChip extends StatelessWidget {
   }
 }
 
-// ── Mood data ─────────────────────────────────────────────────
-class _MoodData {
-  final String emoji;
-  final String label;
-  final String value;
-  final Color color;
-  final Color bg;
-
-  const _MoodData({
-    required this.emoji,
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.bg,
-  });
-}
-
-const _moods = [
-  _MoodData(
-    emoji: '😄',
-    label: 'Sangat Senang',
-    value: 'very_happy',
-    color: Color(0xFF34C759),
-    bg: Color(0xFFE8F8EE),
-  ),
-  _MoodData(
-    emoji: '🙂',
-    label: 'Baik',
-    value: 'good',
-    color: Color(0xFF007AFF),
-    bg: Color(0xFFE5F1FF),
-  ),
-  _MoodData(
-    emoji: '😐',
-    label: 'Biasa',
-    value: 'neutral',
-    color: Color(0xFFFF9500),
-    bg: Color(0xFFFFF3E0),
-  ),
-  _MoodData(
-    emoji: '😔',
-    label: 'Tidak Happy',
-    value: 'unhappy',
-    color: Color(0xFFFF3B30),
-    bg: Color(0xFFFFECEB),
-  ),
-];
-
-// ── Mood picker sheet ─────────────────────────────────────────
-class _MoodPickerSheet extends StatefulWidget {
-  final String namaJenis;
-  const _MoodPickerSheet({required this.namaJenis});
-
-  @override
-  State<_MoodPickerSheet> createState() => _MoodPickerSheetState();
-}
-
-class _MoodPickerSheetState extends State<_MoodPickerSheet> {
-  _MoodData? _selected;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-      ),
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.border,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Title
-          Text(
-            'Bagaimana perasaan Anda\npagi ini?',
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
-              letterSpacing: -0.5,
-              height: 1.2,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Absen ${widget.namaJenis} · ${DateFormat('HH:mm').format(DateTime.now())}',
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppColors.textMuted,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 28),
-
-          // Mood grid
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: _moods.map((mood) {
-              final isSelected = _selected?.value == mood.value;
-              return GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() => _selected = mood);
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
-                  width: 72,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  decoration: BoxDecoration(
-                    color: isSelected ? mood.bg : AppColors.surfaceMuted,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isSelected ? mood.color : Colors.transparent,
-                      width: 2,
-                    ),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: mood.color.withValues(alpha: 0.2),
-                              blurRadius: 16,
-                              offset: const Offset(0, 6),
-                            )
-                          ]
-                        : null,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      AnimatedScale(
-                        scale: isSelected ? 1.2 : 1.0,
-                        duration: const Duration(milliseconds: 220),
-                        child: Text(
-                          mood.emoji,
-                          style: const TextStyle(fontSize: 32),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        mood.label,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
-                          color: isSelected ? mood.color : AppColors.textMuted,
-                          height: 1.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-
-          const SizedBox(height: 28),
-
-          // Tombol lanjut
-          PremiumButton(
-            label: _selected == null
-                ? 'Pilih mood terlebih dahulu'
-                : 'Lanjut Verifikasi Wajah',
-            onTap: _selected == null
-                ? null
-                : () => Navigator.pop(context, _selected),
-            trailingIcon: Icons.arrow_forward_rounded,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Success sheet ─────────────────────────────────────────────
+// ── Success sheet — recap hasil absen + mood terdeteksi ───────
 class _SuccessSheet extends StatelessWidget {
-  final _MoodData mood;
+  final DetectedMood mood;
   final String namaJenis;
 
   const _SuccessSheet({required this.mood, required this.namaJenis});
@@ -742,6 +554,7 @@ class _SuccessSheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Handle
           Container(
             width: 40,
             height: 4,
@@ -793,43 +606,137 @@ class _SuccessSheet extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
-          // Mood recap
+          // Mood detection card
           Container(
-            padding: const EdgeInsets.all(16),
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               color: mood.bg,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: mood.color.withValues(alpha: 0.3)),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Column(
               children: [
-                Text(mood.emoji, style: const TextStyle(fontSize: 28)),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      'Mood hari ini',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textMuted,
-                        fontWeight: FontWeight.w500,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: mood.color.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
                       ),
-                    ),
-                    Text(
-                      mood.label,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: mood.color,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.auto_awesome_rounded,
+                              size: 11, color: mood.color),
+                          const SizedBox(width: 4),
+                          Text(
+                            'MOOD TERDETEKSI',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: mood.color,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 14),
+                Text(mood.emoji,
+                        style: const TextStyle(fontSize: 56))
+                    .animate()
+                    .scale(
+                      begin: const Offset(0.6, 0.6),
+                      end: const Offset(1.0, 1.0),
+                      duration: 500.ms,
+                      curve: Curves.easeOutBack,
+                      delay: 200.ms,
+                    ),
+                const SizedBox(height: 10),
+                Text(
+                  mood.label,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: mood.color,
+                    letterSpacing: -0.3,
+                  ),
+                )
+                    .animate()
+                    .fadeIn(delay: 350.ms, duration: 400.ms)
+                    .moveY(begin: 6, end: 0, duration: 400.ms),
+                const SizedBox(height: 12),
+                // Confidence bar
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Confidence',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              color: mood.color.withValues(alpha: 0.8),
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                          Text(
+                            '${(mood.smileScore * 100).toStringAsFixed(0)}%',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: mood.color,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(3),
+                        child: LinearProgressIndicator(
+                          value: mood.smileScore.clamp(0.0, 1.0),
+                          minHeight: 5,
+                          backgroundColor: mood.color.withValues(alpha: 0.15),
+                          valueColor: AlwaysStoppedAnimation<Color>(mood.color),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+                    .animate()
+                    .fadeIn(delay: 500.ms, duration: 400.ms),
               ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Info text
+          const Text(
+            'Mood terdeteksi otomatis dari ekspresi wajah Anda saat verifikasi. '
+            'Data ini membantu HR memantau kesejahteraan pegawai.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 11.5,
+              color: AppColors.textMuted,
+              fontWeight: FontWeight.w500,
+              height: 1.5,
             ),
           ),
 
